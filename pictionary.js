@@ -48,6 +48,13 @@ var chn = (function() {
                 var msg = JSON.parse(req.uri.params["msg"]);
                 var infoId = nextInfoId();
                 
+                var body = infoId.toString();
+                res.sendHeader(200, { "Content-Length": body.length,
+                                      "Content-Type": "text/plain" });
+                res.sendBody(infoId.toString());
+                res.finish();
+                
+                // reply new info to listeners
                 var resBody = JSON.stringify(msg);
                 sessions[sessionId] = (sessions[sessionId] || []).concat({ infoId: infoId, message: msg });
                 responses[sessionId] = (responses[sessionId] || []).map(function(res) { 
@@ -58,12 +65,6 @@ var chn = (function() {
                     
                     return false;
                 });
-                
-                var body = infoId.toString();
-                res.sendHeader(200, { "Content-Length": body.length,
-                                      "Content-Type": "text/plain" });
-                res.sendBody(infoId.toString());
-                res.finish();
             }
         });
     })();
