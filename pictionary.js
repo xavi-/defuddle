@@ -32,7 +32,7 @@ var srv = (function() {
 // /channel/<session-id>/send?msg=<json> => returns an info-id
 // /channel/<session-id>/read?info-id=<int-id> => returns a list of json messages
 var chn = (function() {
-    var sessions = {}, requests = {};
+    var sessions = {}, responses = {};
     
     var nextInfoId = (function() {
         var infoId = 1;
@@ -47,13 +47,22 @@ var chn = (function() {
                 var sessionId = regSend.exec(req.uri.path)[1];
                 var msg = JSON.parse(req.uri.params["msg"]);
                 var infoId = nextInfoId();
-                var body = infoId.toString();
                 
+                var resBody = JSON.stringify(msg);
                 sessions[sessionId] = (sessions[sessionId] || []).concat({ infoId: infoId, message: msg });
+                responses[sessionId] = (responses[sessionId] || []).map(function(res) { 
+                    res.sendHeader(200, { "Content-Length": resBody.length,
+                                          "Content-Type": "application/json" });
+                    res.sendBody(resBody);
+                    res.finish();
+                    
+                    return false;
+                });
                 
+                var body = infoId.toString();
                 res.sendHeader(200, { "Content-Length": body.length,
                                       "Content-Type": "text/plain" });
-                res.sendBody(body);
+                res.sendBody(infoId.toString());
                 res.finish();
             }
         });
@@ -67,12 +76,18 @@ var chn = (function() {
                 var sessionId = regRead.exec(req.uri.path)[1];
                 var session = sessions[sessionId] || [];
                 var infoId = parseInt(req.uri.params["info-id"], 10) || 0;
-                var body = JSON.stringify(session.filter(function(item) { return item.infoId >= infoId; }));
+                var content = session.filter(function(item) { return item.infoId >= infoId; });
                 
-                res.sendHeader(200, { "Content-Length": body.length,
-                                      "Content-Type": "application/json" });
-                res.sendBody(body);
-                res.finish();
+                if(content.length === 0) {
+                    responses[sessionId] = (responses[sessionId] || []).concat(res);
+                } else {
+                    var body = JSON.stringify(content);
+                    
+                    res.sendHeader(200, { "Content-Length": body.length,
+                                          "Content-Type": "application/json" });
+                    res.sendBody(body);
+                    res.finish();
+                }
             }
         });
     })();
