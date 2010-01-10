@@ -41,7 +41,6 @@ srv.urls["/"] = srv.urls["/index.html"] = function(req, res) {
     });
 };
 
-
 srv.urls["/client.js"] = function(req, res) {
     var promise = process.cat("./client.js", "utf8");
     
@@ -52,7 +51,6 @@ srv.urls["/client.js"] = function(req, res) {
         res.finish();
     });
 };
-
 
 // /channel/<session-id>/send?msg=<json> => returns an info-id
 // /channel/<session-id>/read?info-id=<int-id> => returns a list of json messages
