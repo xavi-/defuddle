@@ -85,10 +85,11 @@ var chn = (function() {
                 res.finish();
                 
                 // reply new info to listeners
-                var resBody = JSON.stringify(msg);
+                var message = { userId: userId, content: msg };
                 sessions[sessionId] = sessions[sessionId] || [];
-                sessions[sessionId].push({ infoId: infoId, message: msg });
+                sessions[sessionId].push({ infoId: infoId, message: message });
                 
+                var resBody = JSON.stringify(message);
                 responses[sessionId] = responses[sessionId] || [];
                 responses[sessionId]
                     .filter(function(o) { return o.userId != userId; })
