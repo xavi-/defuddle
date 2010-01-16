@@ -21,8 +21,7 @@ $(function() {
         var points = {};
         var timer = window.setInterval(function() {
             for(var id in points) {
-                var offset = points[id].offset;
-                var diff = (new Date()).getTime() - offset;
+                var diff = (new Date()).getTime() - points[id].offset;
                 var pnts = points[id]
                 
                 if(diff < pnts[1].time - pnts[0].time) { continue; }
@@ -36,7 +35,7 @@ $(function() {
                 if(points[id][0].end) { points[id].shift(); }
                 
                 if(pnts.length < 2) { delete points[id]; }
-                else { points[id].offset = offset + diff; }
+                else { points[id].offset += diff; }
             }
         }, 20);
         
