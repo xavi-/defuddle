@@ -72,7 +72,7 @@ $(function() {
         };
     })();
     
-    var isMouseDown = false, basePos = $(paper).offset(), throttle = 0, lastPnt;
+    var isMouseDown = false, basePos = $(paper).offset(), lastPnt;
     $(document)
         .mousedown(function(e) {
             isMouseDown = (e.target == paper);
@@ -86,9 +86,6 @@ $(function() {
         })
         .mousemove(function(e) {
             if(!isMouseDown) { return; }
-            
-            /*if((throttle++ % 2) !== 0) { return; }
-            throttle = 0;*/
             
             var x = e.pageX - basePos.left, y = e.pageY - basePos.top;
             
