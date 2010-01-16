@@ -80,11 +80,15 @@ $(function() {
                 var x = e.pageX - basePos.left, y = e.pageY - basePos.top;
                 
                 sendPoint(x, y);
-                lastPnt = { x: x, y: y };
+                lastPnt = { x: x, y: y, time: (new Date()).getTime() };
             }
         })
         .mousemove(function(e) {
             if(!isMouseDown) { return; }
+            
+            var curTime = (new Date()).getTime();
+            
+            if(curTime - lastPnt.time < 20) { return; }
             
             var x = e.pageX - basePos.left, y = e.pageY - basePos.top;
             
@@ -94,7 +98,7 @@ $(function() {
             ctx.stroke();
             
             sendPoint(x, y);
-            lastPnt = { x: x, y: y };
+            lastPnt = { x: x, y: y, time: curTime };
         })
         .mouseup(function(e) {
             if(isMouseDown) {
