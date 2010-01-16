@@ -3,9 +3,6 @@
         return window.ActiveXObject ? new ActiveXObject("Microsoft.XMLHTTP") : new XMLHttpRequest(); 
     }
     
-    function _send(id, msg) {
-    }
-    
     window.Channel = function Channel(id) {
         var listeners = [], lastInfoId = 0;
         
