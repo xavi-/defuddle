@@ -85,11 +85,11 @@ var chn = (function() {
                 res.finish();
                 
                 // reply new info to listeners
-                var message = { userId: userId, content: msg };
+                var info = { infoId: infoId, message: { userId: userId, content: msg } };
                 sessions[sessionId] = sessions[sessionId] || [];
-                sessions[sessionId].push({ infoId: infoId, message: message });
+                sessions[sessionId].push(info);
                 
-                var resBody = JSON.stringify(message);
+                var resBody = JSON.stringify(info);
                 responses[sessionId] = responses[sessionId] || [];
                 responses[sessionId]
                     .filter(function(o) { return o.userId != userId; })
@@ -114,7 +114,7 @@ var chn = (function() {
                 var session = sessions[sessionId] || [];
                 var userId = req.headers["cookie"] || nextUserId();
                 var infoId = parseInt(req.uri.params["info-id"], 10) || 0;
-                var content = session.filter(function(item) { return item.infoId >= infoId; });
+                var content = session.filter(function(item) { return item.infoId > infoId; });
                 
                 sys.puts(req.headers["cookie"]);
                 

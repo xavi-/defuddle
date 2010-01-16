@@ -33,7 +33,7 @@ $(function() {
                 ctx.stroke();
                 
                 points[id].shift();
-                if(points[id][0].isEnd) { points[id].shift(); }
+                if(points[id][0].end) { points[id].shift(); }
                 
                 if(pnts.length < 2) { delete points[id]; }
                 else { points[id].offset = offset + diff; }
@@ -62,7 +62,7 @@ $(function() {
         return function sendPoint(x, y, forced) {
             var curTime = (new Date()).getTime();
             
-            points.push({ x: x, y: y, time: (curTime - lastTime) % 10000, isEnd: forced });
+            points.push({ x: x, y: y, time: (curTime - lastTime) % 10000, end: forced });
             
             if(!forced && curTime - lastTime < 250) { return; }
             lastTime = curTime;
@@ -114,6 +114,8 @@ $(function() {
             
             isMouseDown = false;
         });
+    
+    ch.start();
 });
 </script>
 </body>
