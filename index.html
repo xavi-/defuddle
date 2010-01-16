@@ -80,7 +80,7 @@ $(function() {
             if(isMouseDown) {
                 var x = e.pageX - basePos.left, y = e.pageY - basePos.top;
                 
-                sendPoint(x, y, true);
+                sendPoint(x, y);
                 lastPnt = { x: x, y: y };
             }
         })
