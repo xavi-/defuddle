@@ -21,9 +21,10 @@ $(function() {
         var points = {};
         var timer = window.setInterval(function() {
             for(var id in points) {
-                var diff = (new Date()).getTime() - points[id].offset;
-                var pnts = points[id]
+                if(points[id].length < 2) { continue; }
                 
+                var pnts = points[id];
+                var diff = (new Date()).getTime() - points[id].offset;
                 if(diff < pnts[1].time - pnts[0].time) { continue; }
                 
                 ctx.beginPath();
@@ -34,7 +35,7 @@ $(function() {
                 points[id].shift();
                 if(points[id][0].end) { points[id].shift(); }
                 
-                if(pnts.length < 2) { delete points[id]; }
+                if(pnts.length === 0) { delete points[id]; }
                 else { points[id].offset += diff; }
             }
         }, 20);
