@@ -67,6 +67,8 @@ $(function() {
             if(!forced && curTime - lastTime < 250) { return; }
             lastTime = curTime;
             
+            if(!forced && points.length < 2) { return; }
+            
             ch.send(points);
             points.length = 0;
         };
