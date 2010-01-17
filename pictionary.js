@@ -1,5 +1,6 @@
-var sys = require('sys');
-var http = require('http');
+var sys = require("sys");
+var http = require("http");
+var url = require("url");
 var process = require("posix");
 
 var srv = (function() {
@@ -24,7 +25,7 @@ var srv = (function() {
     }    
         
     http.createServer(function(req, res) {
-        (urls[req.uri.path] || findPattern(req) || error)(req, res);
+        (urls[url.parse(req.url).pathname] || findPattern(req) || error)(req, res);
     }).listen(8000);
     
     return { urls: urls, patterns: patterns, error: error };
@@ -70,10 +71,11 @@ var chn = (function() {
     (function() { // Send
         var regSend = new RegExp("/channel/([0-9]+)/send");
         srv.patterns.push({
-            test: function(req) { return regSend.test(req.uri.path); },
+            test: function(req) { return regSend.test(url.parse(req.url).pathname); },
             handler: function(req, res) {
-                var sessionId = regSend.exec(req.uri.path)[1];
-                var msg = JSON.parse(req.uri.params["msg"]);
+                var uri = url.parse(req.url, true);
+                var sessionId = regSend.exec(uri.pathname)[1];
+                var msg = JSON.parse(uri.query["msg"]);
                 var userId = req.headers["cookie"] || nextUserId();
                 var infoId = nextInfoId();
                 
@@ -108,12 +110,13 @@ var chn = (function() {
     (function() { // Read
         var regRead = new RegExp("/channel/([0-9]+)/read");
         srv.patterns.push({
-            test: function(req) { return regRead.test(req.uri.path); },
+            test: function(req) { return regRead.test(url.parse(req.url).pathname); },
             handler: function(req, res) { 
-                var sessionId = regRead.exec(req.uri.path)[1];
+                var uri = url.parse(req.url, true);
+                var sessionId = regRead.exec(uri.pathname)[1];
                 var session = sessions[sessionId] || [];
                 var userId = req.headers["cookie"] || nextUserId();
-                var infoId = parseInt(req.uri.params["info-id"], 10) || 0;
+                var infoId = parseInt(uri.query["info-id"], 10) || 0;
                 var content = session.filter(function(item) { return item.infoId > infoId; });
                 
                 sys.puts(req.headers["cookie"]);
