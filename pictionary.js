@@ -117,7 +117,7 @@ var chn = (function() {
                 var session = sessions[sessionId] || [];
                 var userId = req.headers["cookie"] || nextUserId();
                 var infoId = parseInt(uri.query["info-id"], 10) || 0;
-                var content = session.filter(function(item) { return item.infoId > infoId; });
+                var content = session.filter(function(item) { return item.infoId > infoId });
                 
                 sys.puts(req.headers["cookie"]);
                 
