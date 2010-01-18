@@ -49,4 +49,8 @@
             client.send();
         };
     };
+    
+    Channel.prototype.clear = function clear() {
+        this.send({ clear: "true" });
+    };
 })(window);

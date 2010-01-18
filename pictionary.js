@@ -86,6 +86,8 @@ var chn = (function() {
                 res.sendBody(infoId.toString());
                 res.finish();
                 
+                if("clear" in msg) { sessions[sessionId] = []; return; }
+                
                 // reply new info to listeners
                 var info = { infoId: infoId, message: { userId: userId, content: msg } };
                 sessions[sessionId] = sessions[sessionId] || [];
