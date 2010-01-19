@@ -12,6 +12,8 @@
                 
             client.open("GET", url);
             client.onreadystatechange = function() {
+                if(this.status !== 200) { listen(); }
+            
                 if(this.readyState !== 4) { return; }
                 
                 if(this.responseText) {
