@@ -11,10 +11,10 @@
                 url = [ "/channel/", id, "/read?info-id=", lastInfoId ].join("");
                 
             client.open("GET", url);
-            client.onreadystatechange = function() {
-                if(this.status !== 200) { listen(); }
-            
+            client.onreadystatechange = function() {            
                 if(this.readyState !== 4) { return; }
+                
+                if(this.status !== 200) { listen(); return; }
                 
                 if(this.responseText) {
                     var data = JSON.parse(this.responseText);
