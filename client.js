@@ -37,19 +37,33 @@
         
         this.start = function start() { listen(); };
         
-        this.send = function send(msg) {
-            var client = xhr(),
-                url = [ "/channel/", this.id, "/send?msg=", encodeURIComponent(JSON.stringify(msg)) ].join("");
-            client.open("GET", url);
-            client.onreadystatechange = function() {
-                if(this.readyState !== 4) { return; }
+        this.send = (function() { 
+            var queue = [], inflight = false;
+            
+            function _send(msg) {
+                var client = xhr(),
+                    url = [ "/channel/", id, "/send?msg=", encodeURIComponent(msg) ].join("");
+                client.open("GET", url);
+                client.onreadystatechange = function() {
+                    if(this.readyState !== 4) { return; }
+                    
+                    var infoId = parseInt(this.responseText, 10) || 0;
+                    
+                    if(infoId > lastInfoId) { lastInfoId = infoId; }
+                    
+                    if(queue.length > 0) { _send(queue.shift()); }
+                    else { inflight = false; }
+                };
+                client.send();
                 
-                var infoId = parseInt(this.responseText, 10) || 0;
-                
-                if(infoId > lastInfoId) { lastInfoId = infoId; }
+                inflight = true;
+            }
+            
+            return function send(msg) {
+                if(inflight) { queue.push(JSON.stringify(msg)); }
+                else { _send(JSON.stringify(msg)); }
             };
-            client.send();
-        };
+        })();
     };
     
     Channel.prototype.clear = function clear() {
