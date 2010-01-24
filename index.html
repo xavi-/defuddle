@@ -22,7 +22,7 @@
 $(function() { 
     var paper = document.getElementById("paper");
     var ctx = paper.getContext("2d");
-    var ch = new Channel(12);
+    var ch = new Channel("pictionary");
     
     $("#clear").click(function() { ch.clear(); return false; });
     
