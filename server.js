@@ -117,7 +117,7 @@ var chn = (function() {
     })();
     
     (function() { // Send
-        var regSend = new RegExp("/channel/([0-9]+)/send");
+        var regSend = new RegExp("/channel/([a-zA-Z0-9_-]+)/send");
         srv.patterns.push({
             test: function(req) { return regSend.test(url.parse(req.url).pathname); },
             handler: function(req, res) {
@@ -141,7 +141,7 @@ var chn = (function() {
     })();
     
     (function() { // Read
-        var regRead = new RegExp("/channel/([0-9]+)/read");
+        var regRead = new RegExp("/channel/([a-zA-Z0-9_-]+)/read");
         srv.patterns.push({
             test: function(req) { return regRead.test(url.parse(req.url).pathname); },
             handler: function(req, res) { 
