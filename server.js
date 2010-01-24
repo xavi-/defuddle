@@ -55,13 +55,59 @@ srv.urls["/client.js"] = function(req, res) {
 
 // /channel/<session-id>/send?msg=<json> => returns an info-id
 // /channel/<session-id>/read?info-id=<int-id> => returns a list of json messages
-var chn = (function() {
-    var sessions = {}, responses = {};
-    
-    var nextInfoId = (function() {
-        var infoId = 1;
-        return function nextInfoId() { return infoId++; };
+var chn = (function() {    
+    var Channel = (function() {
+        var nextInfoId = (function() {
+            var infoId = 1;
+            return function nextInfoId() { return infoId++; };
+        })();
+        
+        return function Channel(id) {
+            var data = [], responses = [];
+            
+            this.id = id;
+            
+            this.data = data;
+            
+            this.send = function send(userId, msg) {
+                var infoId = nextInfoId();
+                var info = { infoId: infoId, message: { userId: userId, content: msg } };
+                data.push(info);
+                
+                var resBody = JSON.stringify(info);
+                responses
+                    .filter(function(o) { return o.userId != userId; })
+                    .forEach(function(o) { 
+                        o.response.sendHeader(200, { "Content-Length": resBody.length,
+                                                     "Content-Type": "application/json",
+                                                     "Set-Cookie": o.userId });
+                        o.response.sendBody(resBody);
+                        o.response.finish();
+                    });
+                responses = responses.filter(function(o) { return o.userId == userId; });
+                
+                return infoId;
+            };
+            
+            this.read = function read(userId, infoId, res) {
+                var content = data.filter(function(item) { return item.infoId > infoId; });
+                
+                if(content.length === 0) {
+                    responses.push({ userId: userId, response: res });
+                } else {
+                    var body = JSON.stringify(content);
+                    
+                    res.sendHeader(200, { "Content-Length": body.length,
+                                          "Content-Type": "application/json",
+                                          "Set-Cookie": userId });
+                    res.sendBody(body);
+                    res.finish();
+                }
+            };
+        };
     })();
+    
+    var channels = {};
     
     var nextUserId = (function() {
         var userId = (new Date()).getTime();
@@ -74,37 +120,20 @@ var chn = (function() {
             test: function(req) { return regSend.test(url.parse(req.url).pathname); },
             handler: function(req, res) {
                 var uri = url.parse(req.url, true);
-                var sessionId = regSend.exec(uri.pathname)[1];
-                var msg = JSON.parse(uri.query["msg"]);
+                var channelId = regSend.exec(uri.pathname)[1];
+                
+                channels[channelId] = channels[channelId] || (new Channel(channelId));
+                
                 var userId = req.headers["cookie"] || nextUserId();
-                var infoId = nextInfoId();
-                
-                var body = infoId.toString();
-                res.sendHeader(200, { "Content-Length": body.length,
-                                      "Content-Type": "text/plain",
-                                      "Set-Cookie": userId });
-                res.sendBody(infoId.toString());
-                res.finish();
-                
-                if("clear" in msg) { sessions[sessionId] = []; return; }
+                var msg = JSON.parse(uri.query["msg"]);
+                var infoId = channels[channelId].send(userId,  msg).toString();
                 
                 // reply new info to listeners
-                var info = { infoId: infoId, message: { userId: userId, content: msg } };
-                sessions[sessionId] = sessions[sessionId] || [];
-                sessions[sessionId].push(info);
-                
-                var resBody = JSON.stringify(info);
-                responses[sessionId] = responses[sessionId] || [];
-                responses[sessionId]
-                    .filter(function(o) { return o.userId != userId; })
-                    .forEach(function(o) { 
-                        o.response.sendHeader(200, { "Content-Length": resBody.length,
-                                                     "Content-Type": "application/json",
-                                                     "Set-Cookie": o.userId });
-                        o.response.sendBody(resBody);
-                        o.response.finish();
-                    });
-                responses[sessionId] = responses[sessionId].filter(function(o) { return o.userId == userId; });
+                res.sendHeader(200, { "Content-Length": infoId.length,
+                                      "Content-Type": "text/plain",
+                                      "Set-Cookie": userId });
+                res.sendBody(infoId);
+                res.finish();
             }
         });
     })();
@@ -115,29 +144,20 @@ var chn = (function() {
             test: function(req) { return regRead.test(url.parse(req.url).pathname); },
             handler: function(req, res) { 
                 var uri = url.parse(req.url, true);
-                var sessionId = regRead.exec(uri.pathname)[1];
-                var session = sessions[sessionId] || [];
+                var channelId = regRead.exec(uri.pathname)[1];
+                
+                channels[channelId] = channels[channelId] || (new Channel(channelId));
+                
                 var userId = req.headers["cookie"] || nextUserId();
                 var infoId = parseInt(uri.query["info-id"], 10) || 0;
-                var content = session.filter(function(item) { return item.infoId > infoId });
+                channels[channelId].read(userId, infoId, res);
                 
                 sys.puts(req.headers["cookie"]);
-                
-                if(content.length === 0) {
-                    responses[sessionId] = responses[sessionId] || [];
-                    responses[sessionId].push({ userId: userId, response: res });
-                } else {
-                    var body = JSON.stringify(content);
-                    
-                    res.sendHeader(200, { "Content-Length": body.length,
-                                          "Content-Type": "application/json",
-                                          "Set-Cookie": userId });
-                    res.sendBody(body);
-                    res.finish();
-                }
             }
         });
     })();
+    
+    return { channels: channels };
 })();
 
-sys.puts("It's time to pictionary");
+sys.puts("It's time to fud");
