@@ -8,10 +8,12 @@ var srv = (function() {
         patterns = [],
         error = function(req, res) { 
             var body = "404'd";
-            res.sendHeader(404, [ ["Content-Type", "text/plain"],
-                                  ["Content-Length", body.length] ]);
+            res.sendHeader(404, { "Content-Length": body.length,
+                                  "Content-Type": "text/plain" });
             res.sendBody(body);
             res.finish();
+            
+            sys.puts("Someone 404'd: " + req.url);
         };
 
     function findPattern(req) {
