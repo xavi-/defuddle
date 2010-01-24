@@ -57,7 +57,9 @@ srv.urls["/client.js"] = function(req, res) {
 
 // /channel/<session-id>/send?msg=<json> => returns an info-id
 // /channel/<session-id>/read?info-id=<int-id> => returns a list of json messages
-var chn = (function() {    
+var chn = (function() {
+    var _onCreate = [];
+
     var Channel = (function() {
         var nextInfoId = (function() {
             var infoId = 1;
@@ -65,15 +67,22 @@ var chn = (function() {
         })();
         
         return function Channel(id) {
-            var data = [], responses = [];
+            var data = [], responses = [], _onReceive = [];
             
             this.id = id;
             
             this.data = data;
             
+            this.onReceive = function onReceive(callback) { _onReceive.push(callback); };
+            
+            this.clear = function clear() { data = []; };
+            
             this.send = function send(userId, msg) {
                 var infoId = nextInfoId();
                 var info = { infoId: infoId, message: { userId: userId, content: msg } };
+                
+                for(var i = 0; i < _onReceive.length; i++) { _onReceive[i].call(this, info.message); }
+                
                 data.push(info);
                 
                 var resBody = JSON.stringify(info);
@@ -87,7 +96,7 @@ var chn = (function() {
                         o.response.finish();
                     });
                 responses = responses.filter(function(o) { return o.userId == userId; });
-                
+                                
                 return infoId;
             };
             
@@ -106,6 +115,8 @@ var chn = (function() {
                     res.finish();
                 }
             };
+            
+            for(var i = 0; i < _onCreate.length; i++) { _onCreate[i].call(this, id, this); }
         };
     })();
     
@@ -159,7 +170,13 @@ var chn = (function() {
         });
     })();
     
-    return { channels: channels };
+    return { channels: channels, onCreate: function(callback) { _onCreate.push(callback); } };
 })();
+
+chn.onCreate(function(id, channel) {
+    if(id === "pictionary") { 
+        channel.onReceive(function(msg) { if("clear" in msg.content) { channel.clear(); } });
+    }
+});
 
 sys.puts("It's time to fud");
