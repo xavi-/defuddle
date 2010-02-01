@@ -154,6 +154,8 @@ function Piece(board) {
     this.row;
     this.col;
     
+    this.left = function left() { };
+    
     this.rotate = function rotate() { 
         var row = this.row, col = this.col;
         
@@ -161,7 +163,21 @@ function Piece(board) {
         board[row + 2][col].color(board[row + 1][col].color());
         board[row + 1][col].color(board[row][col].color());
         board[row][col].color(tmp);
-    }
+    };
+    
+    this.right = function right() { };
+    
+    this.down = function down() {
+        var row = this.row, col = this.col;
+        
+        if(!board[row + 3][col].isEmpty) { return; }
+        
+        board[row + 2][col].pos(row + 3, col);
+        board[row + 1][col].pos(row + 2, col);
+        board[row + 0][col].pos(row + 1, col);
+        
+        this.row += 1;
+    };
 }
 
 var piece = new Piece(board);
@@ -175,7 +191,10 @@ function createNewPiece() {
 $(document).keypress(function(e) {
     var code = e.keyCode || e.which;
     
-    if(code === 13) { piece.rotate(); }
+    if(code === 37) { piece.left(); } // LEFT
+    else if(code === 38) { piece.rotate(); } // UP
+    else if(code === 39) { piece.right(); } // RIGHT
+    else if(code === 40) { piece.down(); } // DOWN
 });
 
 (function() { // Game Loop
