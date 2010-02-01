@@ -154,7 +154,20 @@ function Piece(board) {
     this.row;
     this.col;
     
-    this.left = function left() { };
+    this.left = function left() {
+        var row = this.row, col = this.col;
+        
+        if(col - 1 < 0) { return; }
+        if(!board[row + 0][col - 1].isEmpty) { return; }
+        if(!board[row + 1][col - 1].isEmpty) { return; }
+        if(!board[row + 2][col - 1].isEmpty) { return; }
+        
+        board[row + 0][col].pos(row + 0, col - 1);
+        board[row + 1][col].pos(row + 1, col - 1);
+        board[row + 2][col].pos(row + 2, col - 1);
+        
+        this.col -= 1;
+    };
     
     this.rotate = function rotate() { 
         var row = this.row, col = this.col;
@@ -165,7 +178,20 @@ function Piece(board) {
         board[row][col].color(tmp);
     };
     
-    this.right = function right() { };
+    this.right = function right() {
+        var row = this.row, col = this.col;
+        
+        if(col + 1 >= board.columns) { return; }
+        if(!board[row + 0][col + 1].isEmpty) { return; }
+        if(!board[row + 1][col + 1].isEmpty) { return; }
+        if(!board[row + 2][col + 1].isEmpty) { return; }
+        
+        board[row + 0][col].pos(row + 0, col + 1);
+        board[row + 1][col].pos(row + 1, col + 1);
+        board[row + 2][col].pos(row + 2, col + 1);
+        
+        this.col += 1;
+    };
     
     this.down = function down() {
         var row = this.row, col = this.col;
