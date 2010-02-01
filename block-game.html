@@ -196,6 +196,7 @@ function Piece(board) {
     this.down = function down() {
         var row = this.row, col = this.col;
         
+        if(row + 3 >= board.rows) { return; }
         if(!board[row + 3][col].isEmpty) { return; }
         
         board[row + 2][col].pos(row + 3, col);
