@@ -50,7 +50,7 @@ function Block(board, row, col, color) {
     };
     
     this.destroy = function() {
-        if(!row || !col) { return; }
+        if(row == null || col == null) { return; }
         
         board[row][col] = board.emptyBlock(row, col);
         board.div.removeChild(div);
