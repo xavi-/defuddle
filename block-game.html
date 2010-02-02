@@ -211,11 +211,19 @@ function findMatches(board) {
 var piece = new Piece(board);
 function createNewPiece() {
     piece.row = 0; piece.col = 4;
+    
+    if(!board[0][4].isEmpty) { return false; }
+    if(!board[1][4].isEmpty) { return false; }
+    if(!board[2][4].isEmpty) { return false; }
+    
+    
     board[0][4].color(colors[Math.floor(Math.random() * 3)]);
     board[1][4].color(colors[Math.floor(Math.random() * 3)]);
     board[2][4].color(colors[Math.floor(Math.random() * 3)]);
     
     piece.isMoving = true;
+    
+    return true;
 }
 
 $(document).keypress(function(e) {
@@ -244,17 +252,19 @@ $(document).keypress(function(e) {
         board[row][col].color(color);
     }
     
-    window.setInterval(function gameLoop() {
+    var gameLoop = window.setInterval(function() {
         var curTime = (new Date).getTime();
         if(curTime - lastMove < 500) { return; }
         
         lastMove = curTime;
         
-        var scored = false;
+        var scored = false, isGameOver = false;
         var wasCompressed = compactBoard(board);
         if(!wasCompressed) { piece.isMoving = false; scored = findMatches(board); }
-        if(!wasCompressed && !scored) { createNewPiece(); }
+        if(!wasCompressed && !scored) { isGameOver = !createNewPiece(); }
         else if(wasCompressed) { piece.row += 1; }
+        
+        if(isGameOver) { clearInterval(gameLoop); alert("Game Over"); }
     }, 50);
 })();
 </script>
