@@ -101,54 +101,6 @@ function Board(rows, columns, div) {
     }
 }
 
-function compactBoard(board) {
-    var wasCompressed = false;
-    
-    for(var r = board.rows - 1; r > 0; r--) {
-        for(var c = 0; c < board.columns; c++) {
-            if(board[r][c].isEmpty && !board[r - 1][c].isEmpty) {
-                board[r - 1][c].pos(r, c);
-                wasCompressed = true;
-            }
-        }
-    }
-    
-    return wasCompressed;
-}
-
-function findMatches(board) {
-    var scores = [];
-    
-    for(var r = 0; r < board.rows; r++) {
-        for(var c = 0; c < board.columns; c++) {
-            var tests = [ [ board[r - 1][c], board[r][c], board[r + 1][c] ],
-                          [ board[r][c - 1], board[r][c], board[r][c + 1] ],
-                          [ board[r - 1][c - 1], board[r][c], board[r + 1][c  + 1] ],
-                          [ board[r + 1][c - 1], board[r][c], board[r - 1][c  + 1] ] ];
-            
-            for(var i = 0; i < tests.length; i++) {
-                var score = true;
-                
-                if(tests[i][0].isEmpty) { continue; }
-                
-                for(var j = 0; j < tests[i].length - 1; j++) {
-                    if(tests[i][j].color() !== tests[i][j + 1].color()) { score = false; break; }
-                }
-                
-                if(score) { Array.prototype.push.apply(scores, tests[i]); }
-            }
-        }
-    }
-    
-    for(var i = 0; i < scores.length; i++) { scores[i].destroy(); }
-    
-    return scores.length !== 0;
-}
-
-var board = new Board(15, 9, document.getElementById("board"));
-
-var colors = ["green", "blue", "red"];
-
 function Piece(board) {
     this.row;
     this.col;
@@ -206,6 +158,54 @@ function Piece(board) {
     };
     
     this.isMoving = false;
+}
+
+var board = new Board(15, 9, document.getElementById("board"));
+
+var colors = ["green", "blue", "red"];
+
+function compactBoard(board) {
+    var wasCompressed = false;
+    
+    for(var r = board.rows - 1; r > 0; r--) {
+        for(var c = 0; c < board.columns; c++) {
+            if(board[r][c].isEmpty && !board[r - 1][c].isEmpty) {
+                board[r - 1][c].pos(r, c);
+                wasCompressed = true;
+            }
+        }
+    }
+    
+    return wasCompressed;
+}
+
+function findMatches(board) {
+    var scores = [];
+    
+    for(var r = 0; r < board.rows; r++) {
+        for(var c = 0; c < board.columns; c++) {
+            var tests = [ [ board[r - 1][c], board[r][c], board[r + 1][c] ],
+                          [ board[r][c - 1], board[r][c], board[r][c + 1] ],
+                          [ board[r - 1][c - 1], board[r][c], board[r + 1][c  + 1] ],
+                          [ board[r + 1][c - 1], board[r][c], board[r - 1][c  + 1] ] ];
+            
+            for(var i = 0; i < tests.length; i++) {
+                var score = true;
+                
+                if(tests[i][0].isEmpty) { continue; }
+                
+                for(var j = 0; j < tests[i].length - 1; j++) {
+                    if(tests[i][j].color() !== tests[i][j + 1].color()) { score = false; break; }
+                }
+                
+                if(score) { Array.prototype.push.apply(scores, tests[i]); }
+            }
+        }
+    }
+    
+    for(var i = 0; i < scores.length; i++) { scores[i].destroy(); }
+    
+    return scores.length !== 0;
 }
 
 var piece = new Piece(board);
