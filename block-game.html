@@ -17,7 +17,6 @@ function Block(board, row, col, color) {
     var div = document.createElement("div");
     color = color || "";
     
-
     this.color = function() { 
         if(!arguments.length) { return color; }
         
@@ -172,10 +171,10 @@ function Piece(board) {
     this.rotate = function rotate() { 
         var row = this.row, col = this.col;
         
-        var tmp = board[row + 2][col].color();
-        board[row + 2][col].color(board[row + 1][col].color());
-        board[row + 1][col].color(board[row][col].color());
-        board[row][col].color(tmp);
+        var tmp = board[row][col].color();
+        board[row][col].color(board[row + 1][col].color());
+        board[row + 1][col].color(board[row + 2][col].color());
+        board[row + 2][col].color(tmp);
     };
     
     this.right = function right() {
