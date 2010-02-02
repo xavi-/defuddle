@@ -204,6 +204,8 @@ function Piece(board) {
         
         this.row += 1;
     };
+    
+    this.isMoving = false;
 }
 
 var piece = new Piece(board);
@@ -212,10 +214,14 @@ function createNewPiece() {
     board[0][4].color(colors[Math.floor(Math.random() * 3)]);
     board[1][4].color(colors[Math.floor(Math.random() * 3)]);
     board[2][4].color(colors[Math.floor(Math.random() * 3)]);
+    
+    piece.isMoving = true;
 }
 
 $(document).keypress(function(e) {
     var code = e.keyCode || e.which;
+    
+    if(!piece.isMoving) { return; }
     
     if(code === 37) { piece.left(); } // LEFT
     else if(code === 38) { piece.rotate(); } // UP
@@ -246,7 +252,7 @@ $(document).keypress(function(e) {
         
         var scored = false;
         var wasCompressed = compactBoard(board);
-        if(!wasCompressed) { scored = findMatches(board); }
+        if(!wasCompressed) { piece.isMoving = false; scored = findMatches(board); }
         if(!wasCompressed && !scored) { createNewPiece(); }
         else if(wasCompressed) { piece.row += 1; }
     }, 50);
