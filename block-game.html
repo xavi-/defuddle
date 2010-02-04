@@ -160,10 +160,6 @@ function Piece(board) {
     this.isMoving = false;
 }
 
-var board = new Board(15, 9, document.getElementById("board"));
-
-var colors = ["green", "blue", "red"];
-
 function compactBoard(board) {
     var wasCompressed = false;
     
@@ -210,6 +206,8 @@ function findMatches(board) {
 
 var piece = new Piece(board);
 function createNewPiece() {
+    var colors = ["green", "blue", "red"];
+    
     piece.row = 0; piece.col = 4;
     
     if(!board[0][4].isEmpty) { return false; }
@@ -226,32 +224,25 @@ function createNewPiece() {
     return true;
 }
 
-$(document).keypress(function(e) {
-    var code = e.keyCode || e.which;
-    
-    if(!piece.isMoving) { return; }
-    
-    if(code === 37) { piece.left(); } // LEFT
-    else if(code === 38) { piece.rotate(); } // UP
-    else if(code === 39) { piece.right(); } // RIGHT
-    else if(code === 40) { piece.down(); } // DOWN
-});
+(function() { // initialize
+    var board = new Board(15, 9, document.getElementById("board"));
 
-(function() { // Game Loop
-    var lastMove = (new Date()).getTime();
-    
     $("#board")
         .css({ width: (20 * board.columns) + "px",
                height: (20 * board.rows) + "px" });
     
-    for(var i = 0; i < 50; i++) {
-        var row = Math.floor(Math.random() * board.rows);
-        var col = Math.floor(Math.random() * board.columns);
-        var color = colors[Math.floor(Math.random() * 3)];
+    $(document).keypress(function(e) {
+        var code = e.keyCode || e.which;
         
-        board[row][col].color(color);
-    }
-    
+        if(!piece.isMoving) { return; }
+        
+        if(code === 37) { piece.left(); } // LEFT
+        else if(code === 38) { piece.rotate(); } // UP
+        else if(code === 39) { piece.right(); } // RIGHT
+        else if(code === 40) { piece.down(); } // DOWN
+    });
+
+    var lastMove = (new Date()).getTime();
     var gameLoop = window.setInterval(function() {
         var curTime = (new Date).getTime();
         if(curTime - lastMove < 500) { return; }
