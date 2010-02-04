@@ -100,65 +100,86 @@ function Board(rows, columns, div) {
         }
     }
 }
-
-function Piece(board) {
-    this.row;
-    this.col;
+var Piece = (function() {
+    var colors = ["green", "blue", "red"];
     
-    this.left = function left() {
-        var row = this.row, col = this.col;
+    function Piece(board) {        
+        this.row = 0;
+        this.col = 4;
         
-        if(col - 1 < 0) { return; }
-        if(!board[row + 0][col - 1].isEmpty) { return; }
-        if(!board[row + 1][col - 1].isEmpty) { return; }
-        if(!board[row + 2][col - 1].isEmpty) { return; }
+        this.isFalling = true;
         
-        board[row + 0][col].pos(row + 0, col - 1);
-        board[row + 1][col].pos(row + 1, col - 1);
-        board[row + 2][col].pos(row + 2, col - 1);
+        this.left = function left() {
+            var row = this.row, col = this.col;
+            
+            if(col - 1 < 0) { return; }
+            if(!board[row + 0][col - 1].isEmpty) { return; }
+            if(!board[row + 1][col - 1].isEmpty) { return; }
+            if(!board[row + 2][col - 1].isEmpty) { return; }
+            
+            board[row + 0][col].pos(row + 0, col - 1);
+            board[row + 1][col].pos(row + 1, col - 1);
+            board[row + 2][col].pos(row + 2, col - 1);
+            
+            this.col -= 1;
+        };
         
-        this.col -= 1;
+        this.rotate = function rotate() { 
+            var row = this.row, col = this.col;
+            
+            var tmp = board[row][col].color();
+            board[row][col].color(board[row + 1][col].color());
+            board[row + 1][col].color(board[row + 2][col].color());
+            board[row + 2][col].color(tmp);
+        };
+        
+        this.right = function right() {
+            var row = this.row, col = this.col;
+            
+            if(col + 1 >= board.columns) { return; }
+            if(!board[row + 0][col + 1].isEmpty) { return; }
+            if(!board[row + 1][col + 1].isEmpty) { return; }
+            if(!board[row + 2][col + 1].isEmpty) { return; }
+            
+            board[row + 0][col].pos(row + 0, col + 1);
+            board[row + 1][col].pos(row + 1, col + 1);
+            board[row + 2][col].pos(row + 2, col + 1);
+            
+            this.col += 1;
+        };
+        
+        this.down = function down() {
+            var row = this.row, col = this.col;
+            
+            this.isFalling = false;
+            if(row + 3 >= board.rows) { return; }
+            if(!board[row + 3][col].isEmpty) { return; }
+            this.isFalling = true;
+            
+            board[row + 2][col].pos(row + 3, col);
+            board[row + 1][col].pos(row + 2, col);
+            board[row + 0][col].pos(row + 1, col);
+            
+            this.row += 1;
+        };
+        
+        board[0][4].color(colors[Math.floor(Math.random() * 3)]);
+        board[1][4].color(colors[Math.floor(Math.random() * 3)]);
+        board[2][4].color(colors[Math.floor(Math.random() * 3)]);
+        
+        return this;
     };
     
-    this.rotate = function rotate() { 
-        var row = this.row, col = this.col;
+    Piece.isRoomAvailable = function isRoomAvailable(board) {
+        if(!board[0][4].isEmpty) { return false; }
+        if(!board[1][4].isEmpty) { return false; }
+        if(!board[2][4].isEmpty) { return false; }
         
-        var tmp = board[row][col].color();
-        board[row][col].color(board[row + 1][col].color());
-        board[row + 1][col].color(board[row + 2][col].color());
-        board[row + 2][col].color(tmp);
+        return true;
     };
     
-    this.right = function right() {
-        var row = this.row, col = this.col;
-        
-        if(col + 1 >= board.columns) { return; }
-        if(!board[row + 0][col + 1].isEmpty) { return; }
-        if(!board[row + 1][col + 1].isEmpty) { return; }
-        if(!board[row + 2][col + 1].isEmpty) { return; }
-        
-        board[row + 0][col].pos(row + 0, col + 1);
-        board[row + 1][col].pos(row + 1, col + 1);
-        board[row + 2][col].pos(row + 2, col + 1);
-        
-        this.col += 1;
-    };
-    
-    this.down = function down() {
-        var row = this.row, col = this.col;
-        
-        if(row + 3 >= board.rows) { return; }
-        if(!board[row + 3][col].isEmpty) { return; }
-        
-        board[row + 2][col].pos(row + 3, col);
-        board[row + 1][col].pos(row + 2, col);
-        board[row + 0][col].pos(row + 1, col);
-        
-        this.row += 1;
-    };
-    
-    this.isMoving = false;
-}
+    return Piece;
+})();
 
 function compactBoard(board) {
     var wasCompressed = false;
@@ -204,37 +225,17 @@ function findMatches(board) {
     return scores.length !== 0;
 }
 
-var piece = new Piece(board);
-function createNewPiece() {
-    var colors = ["green", "blue", "red"];
-    
-    piece.row = 0; piece.col = 4;
-    
-    if(!board[0][4].isEmpty) { return false; }
-    if(!board[1][4].isEmpty) { return false; }
-    if(!board[2][4].isEmpty) { return false; }
-    
-    
-    board[0][4].color(colors[Math.floor(Math.random() * 3)]);
-    board[1][4].color(colors[Math.floor(Math.random() * 3)]);
-    board[2][4].color(colors[Math.floor(Math.random() * 3)]);
-    
-    piece.isMoving = true;
-    
-    return true;
-}
-
 (function() { // initialize
     var board = new Board(15, 9, document.getElementById("board"));
-
     $("#board")
         .css({ width: (20 * board.columns) + "px",
                height: (20 * board.rows) + "px" });
-    
+
+    var piece = new Piece(board);    
     $(document).keypress(function(e) {
         var code = e.keyCode || e.which;
         
-        if(!piece.isMoving) { return; }
+        if(!piece.isFalling) { return; }
         
         if(code === 37) { piece.left(); } // LEFT
         else if(code === 38) { piece.rotate(); } // UP
@@ -246,16 +247,19 @@ function createNewPiece() {
     var gameLoop = window.setInterval(function() {
         var curTime = (new Date).getTime();
         if(curTime - lastMove < 500) { return; }
-        
         lastMove = curTime;
         
-        var scored = false, isGameOver = false;
-        var wasCompressed = compactBoard(board);
-        if(!wasCompressed) { piece.isMoving = false; scored = findMatches(board); }
-        if(!wasCompressed && !scored) { isGameOver = !createNewPiece(); }
-        else if(wasCompressed) { piece.row += 1; }
+        if(piece.isFalling) { piece.down(); return; }
         
-        if(isGameOver) { clearInterval(gameLoop); alert("Game Over"); }
+        var wasCompressed = compactBoard(board);
+        if(wasCompressed) { return; }
+        
+         var scored = findMatches(board);
+        if(scored) { return; }
+        
+        if(Piece.isRoomAvailable(board)) { piece = new Piece(board); return; }
+        
+        clearInterval(gameLoop); // Game Over
     }, 50);
 })();
 </script>
