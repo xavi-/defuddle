@@ -12,235 +12,266 @@
 <div id="board"></div>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js" type="text/javascript"></script>
 <script>
-
-function Block(board, row, col, color) {
-    var div = document.createElement("div");
-    color = color || "";
-    
-    this.color = function() { 
-        if(!arguments.length) { return color; }
+var Game = (function() {
+    function Block(board, row, col, color) {
+        var div = document.createElement("div");
+        color = color || "";
         
-        color = arguments[0];
+        this.color = function() { 
+            if(!arguments.length) { return color; }
+            
+            color = arguments[0];
+            
+            div.className = "block " + color;
+            div.style.top = row * 20;
+            div.style.left = col * 20;
+        };
+        
+        this.isEmpty = false;
+        
+        this.pos = function() {
+            if(!arguments.length) { return { row: row, col: col }; }
+            
+            board[row][col] = board.emptyBlock(row, col);
+            if(isNaN(arguments[0])) {
+                row = arguments[0].row;
+                col = arguments[0].col;
+            } else if(!isNaN(arguments[0]) && !isNaN(arguments[1])) {
+                row = arguments[0];
+                col = arguments[1];
+            } else { return; }
+            
+            board[row][col].destroy();
+            board[row][col] = this;
+            
+            div.style.top = row * 20;
+            div.style.left = col * 20;
+        };
+        
+        this.destroy = function() {
+            if(row == null || col == null) { return; }
+            
+            board[row][col] = board.emptyBlock(row, col);
+            board.div.removeChild(div);
+            col = row = null;
+            color = "";
+            div = null;
+            
+            return true;
+        };
         
         div.className = "block " + color;
         div.style.top = row * 20;
         div.style.left = col * 20;
-    };
-    
-    this.isEmpty = false;
-    
-    this.pos = function() {
-        if(!arguments.length) { return { row: row, col: col }; }
+        board.div.appendChild(div);
         
-        board[row][col] = board.emptyBlock(row, col);
-        if(isNaN(arguments[0])) {
-            row = arguments[0].row;
-            col = arguments[0].col;
-        } else if(!isNaN(arguments[0]) && !isNaN(arguments[1])) {
-            row = arguments[0];
-            col = arguments[1];
-        } else { return; }
-        
-        board[row][col].destroy();
         board[row][col] = this;
-        
-        div.style.top = row * 20;
-        div.style.left = col * 20;
-    };
-    
-    this.destroy = function() {
-        if(row == null || col == null) { return; }
-        
-        board[row][col] = board.emptyBlock(row, col);
-        board.div.removeChild(div);
-        col = row = null;
-        color = "";
-        div = null;
-        
-        return true;
-    };
-    
-    div.className = "block " + color;
-    div.style.top = row * 20;
-    div.style.left = col * 20;
-    board.div.appendChild(div);
-    
-    board[row][col] = this;
-}
-
-function EmptyBlock(board, row, col) {    
-    this.color = function() {
-        if(!arguments.length) { return ""; }
-        
-        board[row][col] = new Block(board, row, col, arguments[0]);
     }
-    
-    this.isEmpty = true;
-    
-    this.pos = function() { };
-    
-    this.destroy = function() { return false; };
-}
 
-function Board(rows, columns, div) {
-    this.div = div || document.createElement("div");
-
-    this.rows = rows;
-    this.columns = columns;
-    
-    this.emptyBlock = function(row, col) {
-        return new EmptyBlock(this, row, col);
-    };
-    
-    for(var r = -1; r <= rows; r++) {
-        this[r] = [];
+    function EmptyBlock(board, row, col) {    
+        this.color = function() {
+            if(!arguments.length) { return ""; }
+            
+            board[row][col] = new Block(board, row, col, arguments[0]);
+        }
         
-        for(var c = -1; c <= columns; c++) {
-            this[r][c] = this.emptyBlock(r, c);
+        this.isEmpty = true;
+        
+        this.pos = function() { };
+        
+        this.destroy = function() { return false; };
+    }
+
+    function Board(rows, columns, div) {
+        this.div = div || document.createElement("div");
+
+        this.rows = rows;
+        this.columns = columns;
+        
+        this.emptyBlock = function(row, col) {
+            return new EmptyBlock(this, row, col);
+        };
+        
+        for(var r = -1; r <= rows; r++) {
+            this[r] = [];
+            
+            for(var c = -1; c <= columns; c++) {
+                this[r][c] = this.emptyBlock(r, c);
+            }
         }
     }
-}
-var Piece = (function() {
-    var colors = ["green", "blue", "red"];
-    
-    function Piece(board) {        
-        this.row = 0;
-        this.col = 4;
+    var Piece = (function() {
+        var colors = ["green", "blue", "red"];
         
-        this.isFalling = true;
-        
-        this.left = function left() {
-            var row = this.row, col = this.col;
+        function Piece(board, blocks) {        
+            this.row = 0;
+            this.col = 4;
             
-            if(col - 1 < 0) { return; }
-            if(!board[row + 0][col - 1].isEmpty) { return; }
-            if(!board[row + 1][col - 1].isEmpty) { return; }
-            if(!board[row + 2][col - 1].isEmpty) { return; }
-            
-            board[row + 0][col].pos(row + 0, col - 1);
-            board[row + 1][col].pos(row + 1, col - 1);
-            board[row + 2][col].pos(row + 2, col - 1);
-            
-            this.col -= 1;
-        };
-        
-        this.rotate = function rotate() { 
-            var row = this.row, col = this.col;
-            
-            var tmp = board[row][col].color();
-            board[row][col].color(board[row + 1][col].color());
-            board[row + 1][col].color(board[row + 2][col].color());
-            board[row + 2][col].color(tmp);
-        };
-        
-        this.right = function right() {
-            var row = this.row, col = this.col;
-            
-            if(col + 1 >= board.columns) { return; }
-            if(!board[row + 0][col + 1].isEmpty) { return; }
-            if(!board[row + 1][col + 1].isEmpty) { return; }
-            if(!board[row + 2][col + 1].isEmpty) { return; }
-            
-            board[row + 0][col].pos(row + 0, col + 1);
-            board[row + 1][col].pos(row + 1, col + 1);
-            board[row + 2][col].pos(row + 2, col + 1);
-            
-            this.col += 1;
-        };
-        
-        this.down = function down() {
-            var row = this.row, col = this.col;
-            
-            this.isFalling = false;
-            if(row + 3 >= board.rows) { return; }
-            if(!board[row + 3][col].isEmpty) { return; }
             this.isFalling = true;
             
-            board[row + 2][col].pos(row + 3, col);
-            board[row + 1][col].pos(row + 2, col);
-            board[row + 0][col].pos(row + 1, col);
+            this.left = function left() {
+                var row = this.row, col = this.col;
+                
+                if(col - 1 < 0) { return; }
+                if(!board[row + 0][col - 1].isEmpty) { return; }
+                if(!board[row + 1][col - 1].isEmpty) { return; }
+                if(!board[row + 2][col - 1].isEmpty) { return; }
+                
+                board[row + 0][col].pos(row + 0, col - 1);
+                board[row + 1][col].pos(row + 1, col - 1);
+                board[row + 2][col].pos(row + 2, col - 1);
+                
+                this.col -= 1;
+            };
             
-            this.row += 1;
+            this.rotate = function rotate() { 
+                var row = this.row, col = this.col;
+                
+                var tmp = board[row][col].color();
+                board[row][col].color(board[row + 1][col].color());
+                board[row + 1][col].color(board[row + 2][col].color());
+                board[row + 2][col].color(tmp);
+            };
+            
+            this.right = function right() {
+                var row = this.row, col = this.col;
+                
+                if(col + 1 >= board.columns) { return; }
+                if(!board[row + 0][col + 1].isEmpty) { return; }
+                if(!board[row + 1][col + 1].isEmpty) { return; }
+                if(!board[row + 2][col + 1].isEmpty) { return; }
+                
+                board[row + 0][col].pos(row + 0, col + 1);
+                board[row + 1][col].pos(row + 1, col + 1);
+                board[row + 2][col].pos(row + 2, col + 1);
+                
+                this.col += 1;
+            };
+            
+            this.down = function down() {
+                var row = this.row, col = this.col;
+                
+                this.isFalling = false;
+                if(row + 3 >= board.rows) { return; }
+                if(!board[row + 3][col].isEmpty) { return; }
+                                
+                board[row + 2][col].pos(row + 3, col);
+                board[row + 1][col].pos(row + 2, col);
+                board[row + 0][col].pos(row + 1, col);
+                
+                this.row += 1;
+                this.isFalling = !board[row + 3][col].isEmpty                                                           ;
+            };
+            
+            board[0][4].color(colors[blocks[0]]);
+            board[1][4].color(colors[blocks[1]]);
+            board[2][4].color(colors[blocks[2]]);
+            
+            return this;
         };
         
-        board[0][4].color(colors[Math.floor(Math.random() * 3)]);
-        board[1][4].color(colors[Math.floor(Math.random() * 3)]);
-        board[2][4].color(colors[Math.floor(Math.random() * 3)]);
+        Piece.isRoomAvailable = function isRoomAvailable(board) {
+            if(!board[0][4].isEmpty) { return false; }
+            if(!board[1][4].isEmpty) { return false; }
+            if(!board[2][4].isEmpty) { return false; }
+            
+            return true;
+        };
         
-        return this;
-    };
-    
-    Piece.isRoomAvailable = function isRoomAvailable(board) {
-        if(!board[0][4].isEmpty) { return false; }
-        if(!board[1][4].isEmpty) { return false; }
-        if(!board[2][4].isEmpty) { return false; }
+        return Piece;
+    })();
+
+    function compactBoard(board) {
+        var wasCompressed = false;
         
-        return true;
-    };
+        for(var r = board.rows - 1; r > 0; r--) {
+            for(var c = 0; c < board.columns; c++) {
+                if(board[r][c].isEmpty && !board[r - 1][c].isEmpty) {
+                    board[r - 1][c].pos(r, c);
+                    wasCompressed = true;
+                }
+            }
+        }
+        
+        return wasCompressed;
+    }
+
+    function findMatches(board) {
+        var scores = [];
+        
+        for(var r = 0; r < board.rows; r++) {
+            for(var c = 0; c < board.columns; c++) {
+                var tests = [ [ board[r - 1][c], board[r][c], board[r + 1][c] ],
+                              [ board[r][c - 1], board[r][c], board[r][c + 1] ],
+                              [ board[r - 1][c - 1], board[r][c], board[r + 1][c  + 1] ],
+                              [ board[r + 1][c - 1], board[r][c], board[r - 1][c  + 1] ] ];
+                
+                for(var i = 0; i < tests.length; i++) {
+                    var score = true;
+                    
+                    if(tests[i][0].isEmpty) { continue; }
+                    
+                    for(var j = 0; j < tests[i].length - 1; j++) {
+                        if(tests[i][j].color() !== tests[i][j + 1].color()) { score = false; break; }
+                    }
+                    
+                    if(score) { Array.prototype.push.apply(scores, tests[i]); }
+                }
+            }
+        }
+        
+        for(var i = 0; i < scores.length; i++) { scores[i].destroy(); }
+        
+        return scores.length !== 0;
+    }
     
-    return Piece;
+    return function Game(boardElem) {
+        var board = new Board(15, 9, boardElem);
+        var pieceQueue = [];
+        
+        this.score = 0;
+        
+        this.piece = new Piece(board, [1, 2, 1]);
+        
+        this.newPiece = function newPiece(blocks) {
+            pieceQueue.push(blocks);
+        };
+        
+        this.isGameOver = function isGameOver() {
+            return !Piece.isRoomAvailable(board);
+        };
+        
+        
+        var loop = setInterval((function(game) { return function() {
+            if(game.piece.isFalling) { return; }
+        
+            var wasCompressed = compactBoard(board);
+            if(wasCompressed) { return; }
+            
+            var scored = findMatches(board);
+            if(scored) { return; }
+            
+            if(pieceQueue.length > 0) { game.piece = new Piece(board, pieceQueue.shift()); }
+        } })(this), 500);
+        
+        $(boardElem)
+            .css({ width: (20 * board.columns) + "px",
+                   height: (20 * board.rows) + "px" });
+    };
 })();
 
-function compactBoard(board) {
-    var wasCompressed = false;
-    
-    for(var r = board.rows - 1; r > 0; r--) {
-        for(var c = 0; c < board.columns; c++) {
-            if(board[r][c].isEmpty && !board[r - 1][c].isEmpty) {
-                board[r - 1][c].pos(r, c);
-                wasCompressed = true;
-            }
-        }
-    }
-    
-    return wasCompressed;
-}
-
-function findMatches(board) {
-    var scores = [];
-    
-    for(var r = 0; r < board.rows; r++) {
-        for(var c = 0; c < board.columns; c++) {
-            var tests = [ [ board[r - 1][c], board[r][c], board[r + 1][c] ],
-                          [ board[r][c - 1], board[r][c], board[r][c + 1] ],
-                          [ board[r - 1][c - 1], board[r][c], board[r + 1][c  + 1] ],
-                          [ board[r + 1][c - 1], board[r][c], board[r - 1][c  + 1] ] ];
-            
-            for(var i = 0; i < tests.length; i++) {
-                var score = true;
-                
-                if(tests[i][0].isEmpty) { continue; }
-                
-                for(var j = 0; j < tests[i].length - 1; j++) {
-                    if(tests[i][j].color() !== tests[i][j + 1].color()) { score = false; break; }
-                }
-                
-                if(score) { Array.prototype.push.apply(scores, tests[i]); }
-            }
-        }
-    }
-    
-    for(var i = 0; i < scores.length; i++) { scores[i].destroy(); }
-    
-    return scores.length !== 0;
-}
-
 (function() { // initialize
-    var board = new Board(15, 9, document.getElementById("board"));
-    $("#board")
-        .css({ width: (20 * board.columns) + "px",
-               height: (20 * board.rows) + "px" });
-
-    var piece = new Piece(board);    
+    var game = new Game(document.getElementById("board"));
+    
     $(document).keypress(function(e) {
         var code = e.keyCode || e.which;
         
-        if(!piece.isFalling) { return; }
+        if(!game.piece.isFalling) { return; }
         
-        if(code === 37) { piece.left(); } // LEFT
-        else if(code === 38) { piece.rotate(); } // UP
-        else if(code === 39) { piece.right(); } // RIGHT
-        else if(code === 40) { piece.down(); } // DOWN
+        if(code === 37) { game.piece.left(); } // LEFT
+        else if(code === 38) { game.piece.rotate(); } // UP
+        else if(code === 39) { game.piece.right(); } // RIGHT
+        else if(code === 40) { game.piece.down(); } // DOWN
     });
 
     var lastMove = (new Date()).getTime();
@@ -249,19 +280,18 @@ function findMatches(board) {
         if(curTime - lastMove < 500) { return; }
         lastMove = curTime;
         
-        if(piece.isFalling) { piece.down(); return; }
+        if(game.piece.isFalling) { game.piece.down(); return; }
         
-        var wasCompressed = compactBoard(board);
-        if(wasCompressed) { return; }
-        
-         var scored = findMatches(board);
-        if(scored) { return; }
-        
-        if(Piece.isRoomAvailable(board)) { piece = new Piece(board); return; }
+        if(!game.isGameOver()) { 
+            game.newPiece([ Math.floor(Math.random() * 3), 
+                            Math.floor(Math.random() * 3), 
+                            Math.floor(Math.random() * 3) ]); 
+            return; 
+        }
         
         clearInterval(gameLoop); // Game Over
     }, 50);
-})();
+})();    
 </script>
 </body>
 </html>
