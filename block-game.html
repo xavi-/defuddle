@@ -182,6 +182,8 @@ var Game = (function() {
             return this;
         };
         
+        Piece.colors = colors;
+        
         Piece.isRoomAvailable = function isRoomAvailable(board) {
             if(!board[0][4].isEmpty) { return false; }
             if(!board[1][4].isEmpty) { return false; }
@@ -242,6 +244,8 @@ var Game = (function() {
         
         this.score = 0;
         
+        this.colors = Piece.colors;
+        
         this.piece = null;
         
         this.newPiece = function newPiece(blocks) {
@@ -291,9 +295,9 @@ var Game = (function() {
     game.onFreeze.add(function() {
         if(game.isGameOver()) { return; }
         
-        game.newPiece([ Math.floor(Math.random() * 3),
-                        Math.floor(Math.random() * 3),
-                        Math.floor(Math.random() * 3) ]);
+        game.newPiece([ Math.floor(Math.random() * game.colors.length),
+                        Math.floor(Math.random() * game.colors.length),
+                        Math.floor(Math.random() * game.colors.length) ]);
                         
         var loop = setInterval(function() {
             if(game.piece.isFalling) { game.piece.down(); return; }
