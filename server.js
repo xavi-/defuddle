@@ -18,9 +18,7 @@ var srv = (function() {
 
     function findPattern(req) {
         for(var i = 0, l = patterns.length; i < l; i++) {
-            if(patterns[i].test(req)) {
-                return patterns[i].handler;
-            }
+            if(patterns[i].test(req)) { return patterns[i].handler; }
         }
         
         return null;
@@ -33,27 +31,30 @@ var srv = (function() {
     return { urls: urls, patterns: patterns, error: error };
 })();
 
-srv.urls["/"] = srv.urls["/index.html"] = function(req, res) {
-    var promise = process.cat("./index.html", "utf8");
-    
-    promise.addCallback(function(data) {
-        res.sendHeader(200, { "Conent-Length": data.length,
-                              "Content-Type": "text/html" });
-        res.sendBody(data, "utf8");
-        res.finish();
-    });
-};
+var StaticFileHandler = (function() {
+    function Handler(path, mime, req, res) {
+        var promise = process.cat(path, "utf8");
+        
+        promise.addCallback(function(data) {
+            res.sendHeader(200, { "Conent-Length": data.length,
+                                  "Content-Type": mime });
+            res.sendBody(data, "utf8");
+            res.finish();
+        });
+    }
 
-srv.urls["/client.js"] = function(req, res) {
-    var promise = process.cat("./client.js", "utf8");
-    
-    promise.addCallback(function(data) {
-        res.sendHeader(200, { "Conent-Length": data.length,
-                              "Content-Type": "application/javascript" });
-        res.sendBody(data, "utf8");
-        res.finish();
-    });
-};
+    return function(path, mime) {
+        return function(req, res) { Handler(path, mime, req, res); }; 
+    };
+})();
+
+srv.urls["/"] = srv.urls["/index.html"] = StaticFileHandler("./index.html", "text/html");
+
+srv.urls["/client.js"] = StaticFileHandler("./client.js", "application/javascript");
+
+srv.urls["/pictionary.html"] = StaticFileHandler("./pictionary.html", "text/html");
+
+srv.urls["/block-game.html"] = StaticFileHandler("./block-game.html", "text/html");
 
 // /channel/<session-id>/send?msg=<json> => returns an info-id
 // /channel/<session-id>/read?info-id=<int-id> => returns a list of json messages
