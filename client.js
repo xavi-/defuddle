@@ -17,12 +17,12 @@
                 if(this.status !== 200) { listen(); return; }
                 
                 if(this.responseText) {
-                    var data = JSON.parse(this.responseText);
+                    var info = JSON.parse(this.responseText);
                     
-                    for(var i = 0; i < data.length; i++) {
-                        for(var j = 0; j <  listeners.length; j++) { listeners[j](data[i].message); }
+                    for(var i = 0; i < info.length; i++) {
+                        for(var j = 0; j <  listeners.length; j++) { listeners[j](info[i].message); }
                         
-                        if(data[i].infoId > lastInfoId) { lastInfoId = data[i].infoId; }
+                        if(info[i].infoId > lastInfoId) { lastInfoId = info[i].infoId; }
                     }
                 }
                 

@@ -56,6 +56,8 @@ srv.urls["/pictionary.html"] = StaticFileHandler("./pictionary.html", "text/html
 
 srv.urls["/block-game.html"] = StaticFileHandler("./block-game.html", "text/html");
 
+srv.urls["/tic-tac-toe.html"] = StaticFileHandler("./tic-tac-toe.html", "text/html");
+
 // /channel/<session-id>/send?msg=<json> => returns an info-id
 // /channel/<session-id>/read?info-id=<int-id> => returns a list of json messages
 var chn = (function() {
@@ -140,7 +142,7 @@ var chn = (function() {
                 
                 var userId = req.headers["cookie"] || nextUserId();
                 var msg = JSON.parse(uri.query["msg"]);
-                var infoId = channels[channelId].send(userId,  msg).toString();
+                var infoId = channels[channelId].send(userId, msg).toString();
                 
                 // reply new info to listeners
                 res.sendHeader(200, { "Content-Length": infoId.length,
@@ -176,6 +178,8 @@ var chn = (function() {
 
 chn.onCreate(function(id, channel) {
     if(id === "pictionary") { 
+        channel.onReceive(function(msg) { if("clear" in msg.content) { channel.clear(); } });
+    } else if(id === "tic-tac-toe") { 
         channel.onReceive(function(msg) { if("clear" in msg.content) { channel.clear(); } });
     }
 });
