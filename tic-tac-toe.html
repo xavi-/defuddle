@@ -49,11 +49,12 @@
             if(arguments.length === 0) { return symbol; }
             
             if(this.isSelected) { return; }
+            var fireTrigger = arguments.length === 1 || arguments[1];
             
             symbol = arguments[0];
             this.isSelected = true;
             this.div.innerHTML = symbol;
-            this.onSelected.trigger(symbol);
+            if(fireTrigger) { this.onSelected.trigger(symbol); }
         };
         
         this.onSelected = new Event(this);
@@ -131,7 +132,7 @@
     });
     ch.addListener(function(msg) {
         if("clear" in msg.content) { return; }
-        game.board[msg.content.row][msg.content.col].symbol(msg.content.turn);
+        game.board[msg.content.row][msg.content.col].symbol(msg.content.turn, false);
     });
     
     $("#clear").click(function() { ch.clear(); return false; });
