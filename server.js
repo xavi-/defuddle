@@ -106,10 +106,11 @@ var chn = (function() {
                 var info = { infoId: infoId, message: { userId: userId, content: content } };
                 
                 for(var i = 0; i < _onReceive.length; i++) { _onReceive[i].call(this, info.message); }
+                if(!info.message.content) { return infoId; }
                 
                 this.data.push(info);
                 
-                var resBody = JSON.stringify(info);
+                var resBody = JSON.stringify([ info ]);
                 responses
                     .filter(function(o) { return o.userId != userId; })
                     .forEach(function(o) { 
@@ -223,9 +224,27 @@ var chn = (function() {
 chn.onCreate(function(id, channel) {
     if(id === "pictionary") { 
         channel.onReceive(function(msg) { if("clear" in msg.content) { channel.clear(); } });
-    } else if(id === "tic-tac-toe") { 
-        channel.onReceive(function(msg) { if("clear" in msg.content) { channel.clear(); } });
-    }
+    } else if(id === "tic-tac-toe") { createTicTacToeGame(channel); }
 });
+
+function createTicTacToeGame(channel) {
+    var curGame = null;
+    
+    channel.onReceive(function(msg) {
+        if("clear" in msg.content) {        
+            channel.clear();
+            
+            var users = channel.users();
+            var players = Object.keys(users);
+            if(players.length < 2) { return; }
+            
+            curGame = { x: players[0], o: players[1] };
+            channel.send("0", { "new-game": curGame });
+            sys.puts("New TicTacToe Game: x: " + curGame.x + "; o: " + curGame.o);
+        } else if(curGame) {
+            if(msg.userId != curGame.x && msg.userId != curGame.o) { msg.content = null; }
+        }
+    });
+}
 
 sys.puts("It's time to fud");

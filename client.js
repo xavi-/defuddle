@@ -3,7 +3,7 @@
         return window.ActiveXObject ? new ActiveXObject("Microsoft.XMLHTTP") : new XMLHttpRequest(); 
     }
     
-    window.Channel = function Channel(id) {
+    function Channel(id) {
         var listeners = [], lastInfoId = 0;
         
         function listen() {        
@@ -12,12 +12,12 @@
                 
             client.open("GET", url);
             client.onreadystatechange = function() {            
-                if(this.readyState !== 4) { return; }
+                if(client.readyState !== 4) { return; }
                 
-                if(this.status !== 200) { listen(); return; }
+                if(client.status !== 200) { listen(); return; }
                 
-                if(this.responseText) {
-                    var info = JSON.parse(this.responseText);
+                if(client.responseText) {
+                    var info = JSON.parse(client.responseText);
                     
                     for(var i = 0; i < info.length; i++) {
                         for(var j = 0; j <  listeners.length; j++) { listeners[j](info[i].message); }
@@ -45,9 +45,9 @@
                     url = [ "/channel/", id, "/send?msg=", encodeURIComponent(msg) ].join("");
                 client.open("GET", url);
                 client.onreadystatechange = function() {
-                    if(this.readyState !== 4) { return; }
+                    if(client.readyState !== 4) { return; }
                     
-                    var infoId = parseInt(this.responseText, 10) || 0;
+                    var infoId = parseInt(client.responseText, 10) || 0;
                     
                     if(infoId > lastInfoId) { lastInfoId = infoId; }
                     
@@ -69,4 +69,6 @@
     Channel.prototype.clear = function clear() {
         this.send({ clear: "true" });
     };
+    
+    window.Channel = Channel;
 })(window);
