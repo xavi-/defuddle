@@ -101,9 +101,9 @@ var chn = (function() {
                 res.finish();
             };
             
-            this.send = function send(userId, msg) {
+            this.send = function send(userId, content) {
                 var infoId = nextInfoId();
-                var info = { infoId: infoId, message: { userId: userId, content: msg } };
+                var info = { infoId: infoId, message: { userId: userId, content: content } };
                 
                 for(var i = 0; i < _onReceive.length; i++) { _onReceive[i].call(this, info.message); }
                 
@@ -185,8 +185,8 @@ var chn = (function() {
                 channels[channelId] = channels[channelId] || (new Channel(channelId));
                 
                 var userId = req.headers["cookie"] || nextUserId();
-                var msg = JSON.parse(uri.query["msg"]);
-                var infoId = channels[channelId].send(userId, msg).toString();
+                var content = JSON.parse(uri.query["msg"]);
+                var infoId = channels[channelId].send(userId, content).toString();
                 
                 // reply new info to listeners
                 res.sendHeader(200, { "Content-Length": infoId.length,
