@@ -96,6 +96,7 @@ var chn = (function() {
                 var body = JSON.stringify(content);                    
                 res.sendHeader(200, { "Content-Length": body.length,
                                       "Content-Type": "application/json",
+                                      "Cache-Control": "no-cache",
                                       "Set-Cookie": userId });
                 res.sendBody(body);
                 res.finish();
@@ -116,6 +117,7 @@ var chn = (function() {
                     .forEach(function(o) { 
                         o.response.sendHeader(200, { "Content-Length": resBody.length,
                                                      "Content-Type": "application/json",
+                                                     "Cache-Control": "no-cache",
                                                      "Set-Cookie": o.userId });
                         o.response.sendBody(resBody);
                         o.response.finish();
@@ -135,6 +137,7 @@ var chn = (function() {
                     
                     res.sendHeader(200, { "Content-Length": body.length,
                                           "Content-Type": "application/json",
+                                          "Cache-Control": "no-cache",
                                           "Set-Cookie": userId });
                     res.sendBody(body);
                     res.finish();
@@ -192,6 +195,7 @@ var chn = (function() {
                 // reply new info to listeners
                 res.sendHeader(200, { "Content-Length": infoId.length,
                                       "Content-Type": "text/plain",
+                                      "Cache-Control": "no-cache",
                                       "Set-Cookie": userId });
                 res.sendBody(infoId);
                 res.finish();
