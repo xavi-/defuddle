@@ -51,7 +51,7 @@
             var fireTrigger = arguments.length < 2 || arguments[1];
             
             symbol = arguments[0];
-            this.div.innerHTML = symbol;
+            this.div.innerHTML = symbol || "";
             if(fireTrigger) { this.onChange.trigger(symbol); }
         };
         
@@ -81,6 +81,12 @@
             this.board = board;
             
             this.turn = "X";
+            
+            this.reset = function() {
+                for(var i = 0; i < 3; i++) {
+                    for(var j = 0; j < 3; j++) { board[i][j].symbol(null, false); }
+                }
+            };
             
             this.onPlacement = new Event(this);
             
@@ -129,11 +135,11 @@
         ch.send({ turn: this.turn, row: e.row, col: e.col });
     });
     ch.addListener(function(msg) {
-        if("clear" in msg.content) { return; }
+        if("clear" in msg.content) { game.reset(); return; }
         game.board[msg.content.row][msg.content.col].symbol(msg.content.turn, false);
     });
     
-    $("#clear").click(function() { ch.clear(); return false; });
+    $("#clear").click(function() { ch.clear(); game.reset(); return false; });
     
     ch.start();
 })();
