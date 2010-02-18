@@ -45,21 +45,17 @@
         
         this.col = col;
         
-        this.isSelected = false;
-        
         this.symbol = function() {
             if(arguments.length === 0) { return symbol; }
             
-            if(this.isSelected) { return; }
-            var fireTrigger = arguments.length === 1 || arguments[1];
+            var fireTrigger = arguments.length < 2 || arguments[1];
             
             symbol = arguments[0];
-            this.isSelected = true;
             this.div.innerHTML = symbol;
-            if(fireTrigger) { this.onSelected.trigger(symbol); }
+            if(fireTrigger) { this.onChange.trigger(symbol); }
         };
         
-        this.onSelected = new Event(this);
+        this.onChange = new Event(this);
         
         this.div.className = "cell";
         this.div.style.top = (row * 50) + "px";
@@ -95,7 +91,7 @@
             }
             for(var r = 0; r < 3; r++) {
                 for(var c = 0; c < 3; c++) {
-                    board[r][c].onSelected.add(piecePlaced);
+                    board[r][c].onChange.add(piecePlaced);
                 
                     $(board[r][c].div).click((function(board, row, col, game) {
                         return function() { board[row][col].symbol(game.turn); }
