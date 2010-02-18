@@ -31,7 +31,9 @@
             client.send();
         }
         
-        this.id = id;
+        this.id = function() { return id; };
+        
+        this.userId = function() { return document.cookie; };
         
         this.addListener = function addListener(l) { listeners.push(l); };
         

@@ -97,7 +97,7 @@ var chn = (function() {
                 res.sendHeader(200, { "Content-Length": body.length,
                                       "Content-Type": "application/json",
                                       "Cache-Control": "no-cache",
-                                      "Set-Cookie": userId });
+                                      "Set-Cookie": userId  + "; path=/;"});
                 res.sendBody(body);
                 res.finish();
             };
@@ -118,7 +118,7 @@ var chn = (function() {
                         o.response.sendHeader(200, { "Content-Length": resBody.length,
                                                      "Content-Type": "application/json",
                                                      "Cache-Control": "no-cache",
-                                                     "Set-Cookie": o.userId });
+                                                     "Set-Cookie": o.userId  + "; path=/;"});
                         o.response.sendBody(resBody);
                         o.response.finish();
                     });
@@ -138,7 +138,7 @@ var chn = (function() {
                     res.sendHeader(200, { "Content-Length": body.length,
                                           "Content-Type": "application/json",
                                           "Cache-Control": "no-cache",
-                                          "Set-Cookie": userId });
+                                          "Set-Cookie": userId + "; path=/;" });
                     res.sendBody(body);
                     res.finish();
                 }
@@ -196,7 +196,7 @@ var chn = (function() {
                 res.sendHeader(200, { "Content-Length": infoId.length,
                                       "Content-Type": "text/plain",
                                       "Cache-Control": "no-cache",
-                                      "Set-Cookie": userId });
+                                      "Set-Cookie": userId + "; path=/;"});
                 res.sendBody(infoId);
                 res.finish();
             }
