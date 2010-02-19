@@ -136,6 +136,9 @@
     });
     ch.addListener(function(msg) {
         if("clear" in msg.content) { game.reset(); return; }
+        
+        if("new-game" in msg.content) { return; }
+        
         game.board[msg.content.row][msg.content.col].symbol(msg.content.turn, false);
     });
     

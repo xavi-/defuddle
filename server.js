@@ -80,8 +80,6 @@ var chn = (function() {
             
             this.onReceive = function onReceive(callback) { _onReceive.push(callback); };
             
-            this.clear = function clear() { this.data = []; };
-            
             this.info = function info(userId, type, res) {
                 var content = { type: type };
                 
@@ -102,16 +100,21 @@ var chn = (function() {
                 res.finish();
             };
             
-            this.send = function send(userId, content) {
-                var infoId = nextInfoId();
-                var info = { infoId: infoId, message: { userId: userId, content: content } };
+            this.send = function send(userId, content) {                
+                var info = [], lastInfoId;
+                function sendMore(userId, content) {
+                    lastInfoId = nextInfoId();
+                    info.push({ infoId: lastInfoId, message: { userId: userId, content: content } });
+                }
                 
-                for(var i = 0; i < _onReceive.length; i++) { _onReceive[i].call(this, info.message); }
-                if(!info.message.content) { return infoId; }
+                sendMore(userId, content);
                 
-                this.data.push(info);
+                for(var i = 0; i < _onReceive.length; i++) { _onReceive[i].call(this, info[0].message, sendMore); }
+                if(!info[0].message.content) { return lastInfoId; }
                 
-                var resBody = JSON.stringify([ info ]);
+                Array.prototype.push.apply(this.data, info);
+                
+                var resBody = JSON.stringify(info);
                 responses
                     .filter(function(o) { return o.userId != userId; })
                     .forEach(function(o) { 
@@ -124,7 +127,7 @@ var chn = (function() {
                     });
                 responses = responses.filter(function(o) { return o.userId == userId; });
                 
-                return infoId;
+                return lastInfoId;
             };
             
             this.read = function read(userId, infoId, res) {
@@ -227,23 +230,23 @@ var chn = (function() {
 
 chn.onCreate(function(id, channel) {
     if(id === "pictionary") { 
-        channel.onReceive(function(msg) { if("clear" in msg.content) { channel.clear(); } });
+        channel.onReceive(function(msg) { if("clear" in msg.content) { channel.data = channel.data.splice(-1); } });
     } else if(id === "tic-tac-toe") { createTicTacToeGame(channel); }
 });
 
 function createTicTacToeGame(channel) {
     var curGame = null;
     
-    channel.onReceive(function(msg) {
+    channel.onReceive(function(msg, sendMoreInfo) {
         if("clear" in msg.content) {        
-            channel.clear();
+            channel.data = channel.data.splice(-1)
             
             var users = channel.users();
             var players = Object.keys(users);
             if(players.length < 2) { return; }
             
             curGame = { x: players[0], o: players[1] };
-            channel.send("0", { "new-game": curGame });
+            sendMoreInfo("0", { "new-game": curGame });
             sys.puts("New TicTacToe Game: x: " + curGame.x + "; o: " + curGame.o);
         } else if(curGame) {
             if(msg.userId != curGame.x && msg.userId != curGame.o) { msg.content = null; }
