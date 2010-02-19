@@ -61,11 +61,9 @@
         this.symbol = function() {
             if(arguments.length === 0) { return symbol; }
             
-            var fireTrigger = arguments.length < 2 || arguments[1];
-            
             symbol = arguments[0];
             this.div.innerHTML = symbol || "";
-            if(fireTrigger) { this.onChange.trigger(symbol); }
+            this.onChange.trigger({ symbol: symbol, source: arguments[1] });
         };
         
         this.onChange = new Event(this);
@@ -96,6 +94,7 @@
             this.turn = "X";
             
             this.disable = function() {
+                if($(this.board.div).find(".disable-cover").length > 0) { return; }
                 $("<div/>").addClass("disable-cover").appendTo(this.board.div);
             };
             
@@ -105,23 +104,24 @@
             
             this.reset = function() {
                 for(var i = 0; i < 3; i++) {
-                    for(var j = 0; j < 3; j++) { board[i][j].symbol(null, false); }
+                    for(var j = 0; j < 3; j++) { board[i][j].symbol(null, "reset"); }
                 }
             };
             
             this.onPlacement = new Event(this);
             
             var game = this;
-            function piecePlaced() {
-                game.onPlacement.trigger(this);
+            function piecePlaced(e) {
+                game.onPlacement.trigger({cell: this, source: e.source });
                 game.turn = (game.turn === "X") ? "O" : "X";
+                if(game.player === game.turn) { game.enable(); } else { game.disable(); }
             }
             for(var r = 0; r < 3; r++) {
                 for(var c = 0; c < 3; c++) {
                     board[r][c].onChange.add(piecePlaced);
                 
                     $(board[r][c].div).click((function(board, row, col, game) {
-                        return function() { board[row][col].symbol(game.turn); }
+                        return function() { board[row][col].symbol(game.turn, "user"); }
                     })(board, r, c, this));
                 }
             }
@@ -153,7 +153,7 @@
     var ch = new Channel("tic-tac-toe");
     var game = new Game(new Board(document.getElementById("board")));
     game.onPlacement.add(function(e) {
-        ch.send({ turn: this.turn, row: e.row, col: e.col });
+        if(e.source === "user") { ch.send({ turn: this.turn, row: e.cell.row, col: e.cell.col }); }
     });
     ch.addListener(function(msg) {
         if("clear" in msg.content) { game.reset(); return; }
@@ -162,14 +162,15 @@
             var info = msg.content["new-game"];
             
             game.enable();
+            if(info.x === ch.userId()) { $("#player-status").text("You're player X"); game.player = "X"; }
+            else if(info.o === ch.userId()) { $("#player-status").text("You're plalyer O"); game.player = "O"; }
+            else { $("#player-status").text("Sorry you're not a player..."); game.player = null; }
+            if(game.player !== "X") { game.disable(); }
             
-            if(info.x === ch.userId()) { $("#player-status").text("You're player X"); }
-            else if(info.o === ch.userId()) { $("#player-status").text("You're plalyer O"); }
-            else { $("#player-status").text("Sorry you're not a player..."); game.disable(); }
             return;
         }
         
-        game.board[msg.content.row][msg.content.col].symbol(msg.content.turn, false);
+        game.board[msg.content.row][msg.content.col].symbol(msg.content.turn, "server");
     });
     
     $("#clear").click(function() { ch.clear(); game.reset(); return false; });
