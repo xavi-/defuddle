@@ -31,6 +31,7 @@
 </style>
 </head>
 <body>
+    <span id="turn-status"></span>
     <div id="board"></div>
     <a id="clear" href="404.html">Clear Board</a>
     <br/>
@@ -86,46 +87,63 @@
         this.div.className = "board";
     }
     
-    var Game = (function() {
+    var Game = (function() {    
+        function updateTurns(e) {
+            this.whosTurn = this.whosNext;
+            this.whosNext = (this.whosTurn === "X") ? "O" : "X";
+            if(this.player === this.whosTurn) { this.enable(); } else { this.disable(); }
+        }
+    
         function Game(board) {
             
             this.board = board;
             
-            this.turn = "X";
+            this.whosTurn = "";
             
-            this.disable = function() {
-                if($(this.board.div).find(".disable-cover").length > 0) { return; }
-                $("<div/>").addClass("disable-cover").appendTo(this.board.div);
-            };
-            
-            this.enable = function() {
-                $(this.board.div).find(".disable-cover").remove();
-            };
-            
-            this.reset = function() {
-                for(var i = 0; i < 3; i++) {
-                    for(var j = 0; j < 3; j++) { board[i][j].symbol(null, "reset"); }
-                }
-            };
-            
+            this.whosNext = "X";
+                        
+            this.onReset = new Event(this);
+                        
             this.onPlacement = new Event(this);
             
-            var game = this;
-            function piecePlaced(e) {
-                game.onPlacement.trigger({cell: this, source: e.source });
-                game.turn = (game.turn === "X") ? "O" : "X";
-                if(game.player === game.turn) { game.enable(); } else { game.disable(); }
-            }
             for(var r = 0; r < 3; r++) {
                 for(var c = 0; c < 3; c++) {
-                    board[r][c].onChange.add(piecePlaced);
+                    board[r][c].onChange.add((function(game) { 
+                        return function(e) {
+                            if(e.source === "reset") { return; }
+                            game.onPlacement.trigger({cell: this, source: e.source });
+                            updateTurns.call(game);
+                        };
+                    })(this));
                 
                     $(board[r][c].div).click((function(board, row, col, game) {
-                        return function() { board[row][col].symbol(game.turn, "user"); }
+                        return function() { board[row][col].symbol(game.whosTurn, "user"); };
                     })(board, r, c, this));
                 }
             }
         }
+        
+        Game.prototype.disable = function() {
+            if($(this.board.div).find(".disable-cover").length > 0) { return; }
+            $("<div/>").addClass("disable-cover").appendTo(this.board.div);
+        };
+        
+        Game.prototype.enable = function() {
+            $(this.board.div).find(".disable-cover").remove();
+        };
+        
+        
+        Game.prototype.reset = function() {
+            this.whosTurn = "";
+            this.whosNext = "X";
+            
+            for(var i = 0; i < 3; i++) {
+                for(var j = 0; j < 3; j++) { this.board[i][j].symbol(null, "reset"); }
+            }
+            
+            updateTurns.call(this);
+            this.onReset.trigger();
+        };
         
         Game.prototype.isGameOver = function() {
             var tests = [ [ this.board[0][0].symbol(), this.board[0][1].symbol(), this.board[0][2].symbol() ],
@@ -147,13 +165,17 @@
             
             return winner || !hasEmptyCell;
         };
+        
         return Game;
     })();
     
     var ch = new Channel("tic-tac-toe");
     var game = new Game(new Board(document.getElementById("board")));
+    game.onReset.add(function() { $("#turn-status").text("It's " + this.whosTurn + " turn."); });
     game.onPlacement.add(function(e) {
-        if(e.source === "user") { ch.send({ turn: this.turn, row: e.cell.row, col: e.cell.col }); }
+        if(e.source === "user") { ch.send({ turn: this.whosTurn, row: e.cell.row, col: e.cell.col }); }
+        
+        $("#turn-status").text("It's " + this.whosNext + " turn.");
     });
     ch.addListener(function(msg) {
         if("clear" in msg.content) { game.reset(); return; }
