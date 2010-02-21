@@ -1,7 +1,7 @@
 var sys = require("sys");
 var http = require("http");
 var url = require("url");
-var process = require("posix");
+var fs = require("fs");
 
 var srv = (function() {
     var urls = {},
@@ -10,8 +10,8 @@ var srv = (function() {
             var body = "404'd";
             res.sendHeader(404, { "Content-Length": body.length,
                                   "Content-Type": "text/plain" });
-            res.sendBody(body);
-            res.finish();
+            res.write(body);
+            res.close();
             
             sys.puts("Someone 404'd: " + req.url);
         };
@@ -33,13 +33,11 @@ var srv = (function() {
 
 var StaticFileHandler = (function() {
     function Handler(path, mime, req, res) {
-        var promise = process.cat(path, "utf8");
-        
-        promise.addCallback(function(data) {
+        fs.readFile(path, "utf8").addCallback(function(data) {
             res.sendHeader(200, { "Conent-Length": data.length,
                                   "Content-Type": mime });
-            res.sendBody(data, "utf8");
-            res.finish();
+            res.write(data, "utf8");
+            res.close();
         });
     }
 
@@ -96,8 +94,8 @@ var chn = (function() {
                                       "Content-Type": "application/json",
                                       "Cache-Control": "no-cache",
                                       "Set-Cookie": userId  + "; path=/;"});
-                res.sendBody(body);
-                res.finish();
+                res.write(body);
+                res.close();
             };
             
             this.send = function send(userId, content) {                
@@ -122,8 +120,8 @@ var chn = (function() {
                                                      "Content-Type": "application/json",
                                                      "Cache-Control": "no-cache",
                                                      "Set-Cookie": o.userId  + "; path=/;"});
-                        o.response.sendBody(resBody);
-                        o.response.finish();
+                        o.response.write(resBody);
+                        o.response.close();
                     });
                 responses = responses.filter(function(o) { return o.userId == userId; });
                 
@@ -142,8 +140,8 @@ var chn = (function() {
                                           "Content-Type": "application/json",
                                           "Cache-Control": "no-cache",
                                           "Set-Cookie": userId + "; path=/;" });
-                    res.sendBody(body);
-                    res.finish();
+                    res.write(body);
+                    res.close();
                 }
             };
             
@@ -200,8 +198,8 @@ var chn = (function() {
                                       "Content-Type": "text/plain",
                                       "Cache-Control": "no-cache",
                                       "Set-Cookie": userId + "; path=/;"});
-                res.sendBody(infoId);
-                res.finish();
+                res.write(infoId);
+                res.close();
             }
         });
     })();
