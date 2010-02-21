@@ -132,7 +132,8 @@ var chn = (function() {
                 var content = this.data.filter(function(item) { return item.infoId > infoId; });
                 
                 if(content.length === 0) {
-                    responses.push({ userId: userId, response: res });
+                    responses = responses.filter(function(o) { return o.userId != userId; });
+                    responses.push({ userId: userId, response: res, time: (new Date()).getTime() });
                 } else {
                     var body = JSON.stringify(content);
                     
@@ -146,6 +147,18 @@ var chn = (function() {
             };
             
             setInterval(function() {
+                var curTime = (new Date()).getTime();
+                responses // Removing old responses
+                    .filter(function(o) { return curTime - o.time > 45000; })
+                    .forEach(function(o) {
+                        o.response.sendHeader(200, { "Content-Length": "0",
+                                                     "Content-Type": "application/json",
+                                                     "Cache-Control": "no-cache",
+                                                     "Set-Cookie": o.userId + "; path=/;" });
+                        o.response.write(""); o.response.close(); o.response = null;
+                    });
+                responses = responses.filter(function(o) { return o.response != null });
+                
                 for(var userId in users) { users[userId] -= 1; }
                 responses.forEach(function(o) { users[o.userId] = 2; });
                 for(var userId in users) if(users[userId] <= 0) { delete users[userId]; }
