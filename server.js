@@ -116,15 +116,12 @@ var chn = (function() {
                 
                 Array.prototype.push.apply(this.data, info);
                 
-                var resBody = JSON.stringify(info);
-                responses
-                    .filter(function(o) { return o.userId !== userId; })
-                    .forEach(function(o) { sendJSON(o.userId, info, o.response); });
+                responses.filter(function(o) { return o.userId !== userId; })
+                         .forEach(function(o) { sendJSON(o.userId, info, o.response); });
                 responses = responses.filter(function(o) { return o.userId === userId; });
                 
                 var newInfo = info.filter(function(o) { return o.message.userId !== userId; });
                 if(newInfo.length > 0) {
-                    resBody = JSON.stringify(newInfo);
                     responses.forEach(function(o) { sendJSON(o.userId, newInfo, o.response); });
                     responses = [];
                 }
