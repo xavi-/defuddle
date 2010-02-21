@@ -81,8 +81,8 @@ var chn = (function() {
             this.info = function info(userId, type, res) {
                 var content = { type: type };
                 
-                if(type == "users") { content.message = users; }
-                else if(type == "remove-me") {
+                if(type === "users") { content.message = users; }
+                else if(type === "remove-me") {
                     content.message = (users[userId] ? "OK" : "NA");
                     responses = responses.filter(function(o) { return o.userId != userId; });
                     users[userId] = 0;
@@ -114,7 +114,7 @@ var chn = (function() {
                 
                 var resBody = JSON.stringify(info);
                 responses
-                    .filter(function(o) { return o.userId != userId; })
+                    .filter(function(o) { return o.userId !== userId; })
                     .forEach(function(o) { 
                         o.response.sendHeader(200, { "Content-Length": resBody.length,
                                                      "Content-Type": "application/json",
@@ -123,8 +123,22 @@ var chn = (function() {
                         o.response.write(resBody);
                         o.response.close();
                     });
-                responses = responses.filter(function(o) { return o.userId == userId; });
+                responses = responses.filter(function(o) { return o.userId === userId; });
                 
+                var newInfo = info.filter(function(o) { return o.message.userId !== userId; });
+                if(newInfo.length > 0) {
+                    resBody = JSON.stringify(newInfo);
+                    responses.forEach(function(o) { 
+                        o.response.sendHeader(200, { "Content-Length": resBody.length,
+                                                     "Content-Type": "application/json",
+                                                     "Cache-Control": "no-cache",
+                                                     "Set-Cookie": o.userId  + "; path=/;"});
+                        o.response.write(resBody);
+                        o.response.close();
+                    });
+                    responses = [];
+                }
+                    
                 return lastInfoId;
             };
             
