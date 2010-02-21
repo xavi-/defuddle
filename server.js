@@ -107,12 +107,13 @@ var chn = (function() {
                 function sendMore(userId, content) {
                     lastInfoId = nextInfoId();
                     info.push({ infoId: lastInfoId, message: { userId: userId, content: content } });
+                    return lastInfoId;
                 }
                 
                 sendMore(userId, content);
                 
                 for(var i = 0; i < _onReceive.length; i++) { _onReceive[i].call(this, info[0].message, sendMore); }
-                if(!info[0].message.content) { return lastInfoId; }
+                if(!info[0].message.content) { return -1; }
                 
                 Array.prototype.push.apply(this.data, info);
                 
@@ -232,7 +233,7 @@ chn.onCreate(function(id, channel) {
 });
 
 function createTicTacToeGame(channel) {
-    var curGame = null;
+    var curGame = null, board = {}, moves = { X: 0, O: 0 };
     
     channel.onReceive(function(msg, sendMoreInfo) {
         if("clear" in msg.content) {        
@@ -242,11 +243,24 @@ function createTicTacToeGame(channel) {
             var players = Object.keys(users);
             if(players.length < 2) { return; }
             
+            board = {};
+            moves = { X: 0, O: 0 };
             curGame = { x: players[0], o: players[1] };
+            
             sendMoreInfo("0", { "new-game": curGame });
             sys.puts("New TicTacToe Game: x: " + curGame.x + "; o: " + curGame.o);
         } else if(curGame) {
-            if(msg.userId != curGame.x && msg.userId != curGame.o) { msg.content = null; }
+            // Confirm that the message came from one of the current players
+            if(msg.userId != curGame.x && msg.userId != curGame.o) { msg.content = null; return; }
+            
+            // Confirm the cell is not occupied
+            if(board[msg.content.row + "," + msg.content.col]) { msg.content = null; return; }
+            else { board[msg.content.row + "," + msg.content.col] = msg.content.turn; }
+            
+            // Confirm that the turn is correct
+            if(msg.content.turn === "X" && moves.X !== moves.O) { msg.content = null; return; }
+            else if(msg.content.turn === "O" && moves.X - moves.O !== 1) { msg.content = null; return; }
+            else { moves[msg.content.turn] += 1; }
         }
     });
 }
