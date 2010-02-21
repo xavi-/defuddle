@@ -67,6 +67,16 @@ var chn = (function() {
             return function nextInfoId() { return infoId++; };
         })();
         
+        function sendJSON(userId, content, res) {
+            var body = JSON.stringify(content);                    
+            res.sendHeader(200, { "Content-Length": body.length,
+                                  "Content-Type": "application/json",
+                                  "Cache-Control": "no-cache",
+                                  "Set-Cookie": userId  + "; path=/;"});
+            res.write(body);
+            res.close();
+        }
+        
         return function Channel(id) {
             var users = {}, responses = [], _onReceive = [];
             
@@ -84,18 +94,12 @@ var chn = (function() {
                 if(type === "users") { content.message = users; }
                 else if(type === "remove-me") {
                     content.message = (users[userId] ? "OK" : "NA");
-                    responses = responses.filter(function(o) { return o.userId != userId; });
+                    responses = responses.filter(function(o) { return o.userId !== userId; });
                     users[userId] = 0;
                 }
                 else { content.message = "Unknown Type"; }
                 
-                var body = JSON.stringify(content);                    
-                res.sendHeader(200, { "Content-Length": body.length,
-                                      "Content-Type": "application/json",
-                                      "Cache-Control": "no-cache",
-                                      "Set-Cookie": userId  + "; path=/;"});
-                res.write(body);
-                res.close();
+                sendJSON(userId, content, res);
             };
             
             this.send = function send(userId, content) {                
@@ -115,27 +119,13 @@ var chn = (function() {
                 var resBody = JSON.stringify(info);
                 responses
                     .filter(function(o) { return o.userId !== userId; })
-                    .forEach(function(o) { 
-                        o.response.sendHeader(200, { "Content-Length": resBody.length,
-                                                     "Content-Type": "application/json",
-                                                     "Cache-Control": "no-cache",
-                                                     "Set-Cookie": o.userId  + "; path=/;"});
-                        o.response.write(resBody);
-                        o.response.close();
-                    });
+                    .forEach(function(o) { sendJSON(o.userId, info, o.response); });
                 responses = responses.filter(function(o) { return o.userId === userId; });
                 
                 var newInfo = info.filter(function(o) { return o.message.userId !== userId; });
                 if(newInfo.length > 0) {
                     resBody = JSON.stringify(newInfo);
-                    responses.forEach(function(o) { 
-                        o.response.sendHeader(200, { "Content-Length": resBody.length,
-                                                     "Content-Type": "application/json",
-                                                     "Cache-Control": "no-cache",
-                                                     "Set-Cookie": o.userId  + "; path=/;"});
-                        o.response.write(resBody);
-                        o.response.close();
-                    });
+                    responses.forEach(function(o) { sendJSON(o.userId, newInfo, o.response); });
                     responses = [];
                 }
                     
@@ -146,31 +136,16 @@ var chn = (function() {
                 var content = this.data.filter(function(item) { return item.infoId > infoId; });
                 
                 if(content.length === 0) {
-                    responses = responses.filter(function(o) { return o.userId != userId; });
+                    responses = responses.filter(function(o) { return o.userId !== userId; });
                     responses.push({ userId: userId, response: res, time: (new Date()).getTime() });
-                } else {
-                    var body = JSON.stringify(content);
-                    
-                    res.sendHeader(200, { "Content-Length": body.length,
-                                          "Content-Type": "application/json",
-                                          "Cache-Control": "no-cache",
-                                          "Set-Cookie": userId + "; path=/;" });
-                    res.write(body);
-                    res.close();
-                }
+                } else { sendJSON(userId, content, res); }
             };
             
             setInterval(function() {
                 var curTime = (new Date()).getTime();
                 responses // Removing old responses
                     .filter(function(o) { return curTime - o.time > 45000; })
-                    .forEach(function(o) {
-                        o.response.sendHeader(200, { "Content-Length": "0",
-                                                     "Content-Type": "application/json",
-                                                     "Cache-Control": "no-cache",
-                                                     "Set-Cookie": o.userId + "; path=/;" });
-                        o.response.write(""); o.response.close(); o.response = null;
-                    });
+                    .forEach(function(o) { sendJSON(o.userId, [], o.response);  o.response = null; });
                 responses = responses.filter(function(o) { return o.response != null });
                 
                 for(var userId in users) { users[userId] -= 1; }
