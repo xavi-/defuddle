@@ -56,6 +56,8 @@ srv.urls["/block-game.html"] = StaticFileHandler("./block-game.html", "text/html
 
 srv.urls["/tic-tac-toe.html"] = StaticFileHandler("./tic-tac-toe.html", "text/html");
 
+srv.urls["/game-lib/tic-tac-toe.js"] = StaticFileHandler("./game-lib/tic-tac-toe.js", "application/x-javascript");
+
 // /channel/<session-id>/send?msg=<json> => returns an info-id
 // /channel/<session-id>/read?info-id=<int-id> => returns a list of json messages
 var chn = (function() {
