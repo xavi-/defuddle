@@ -115,4 +115,4 @@
     context.Cell = Cell;
     context.Board = Board;
     context.Game = Game;
-})((window && (window.ttt = {})) || exports);
+})(typeof exports === "object" ? exports : (window.ttt = {}));

@@ -235,34 +235,40 @@ chn.onCreate(function(id, channel) {
 });
 
 function createTicTacToeGame(channel) {
-    var curGame = null, board = {}, moves = { X: 0, O: 0 };
+    var ttt = require("./game-lib/tic-tac-toe");
+    var players, game;
     
     channel.onReceive(function(msg, sendMoreInfo) {
         if("clear" in msg.content) {        
             channel.data = channel.data.splice(-1)
             
             var users = channel.users();
-            var players = Object.keys(users);
-            if(players.length < 2) { return; }
+            var canidates = Object.keys(users);
+            if(canidates.length < 2) { return; }
             
-            board = {};
-            moves = { X: 0, O: 0 };
-            curGame = { x: players[0], o: players[1] };
+            game = new ttt.Game(new ttt.Board());
+            game.reset();
             
-            sendMoreInfo("0", { "new-game": curGame });
-            sys.puts("New TicTacToe Game: x: " + curGame.x + "; o: " + curGame.o);
-        } else if(curGame) {
-            // Confirm that the message came from one of the current players
-            if(msg.userId != curGame.x && msg.userId != curGame.o) { msg.content = null; return; }
+            players = { x: canidates[0], o: canidates[1] };
             
-            // Confirm the cell is not occupied
-            if(board[msg.content.row + "," + msg.content.col]) { msg.content = null; return; }
-            else { board[msg.content.row + "," + msg.content.col] = msg.content.turn; }
+            sendMoreInfo("0", { "new-game": players });
+            sys.puts("New TicTacToe Game: x: " + players.x + "; o: " + players.o);
+        } else if(players) {
+            if(msg.userId != players.x && msg.userId != players.o) {
+                sys.puts("Cheater! bad player : " + msg.userId);
+                sys.puts("players: " + sys.inspect(players));
+                msg.content = null; return; 
+            }
             
-            // Confirm that the turn is correct
-            if(msg.content.turn === "X" && moves.X !== moves.O) { msg.content = null; return; }
-            else if(msg.content.turn === "O" && moves.X - moves.O !== 1) { msg.content = null; return; }
-            else { moves[msg.content.turn] += 1; }
+            if(game.whosTurn !== msg.content.turn) {
+                sys.puts("Cheater! wrong turn : game: " + game.whosTurn + "; msg: " + msg.content.turn);
+                msg.content = null; return; 
+            }
+            
+            if(game.board[msg.content.row][msg.content.col].symbol()) { 
+                sys.puts("Cheater! bad cell : row: " + msg.content.row + "; col: " + msg.content.col); 
+                msg.content = null; return; 
+            } else { game.board[msg.content.row][msg.content.col].symbol(msg.content.turn); }
         }
     });
 }
