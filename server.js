@@ -269,6 +269,9 @@ function createTicTacToeGame(channel) {
                 sys.puts("Cheater! bad cell : row: " + msg.content.row + "; col: " + msg.content.col); 
                 msg.content = null; return; 
             } else { game.board[msg.content.row][msg.content.col].symbol(msg.content.turn); }
+            
+            var winner = game.isGameOver();
+            if(winner) { sendMoreInfo("0", { "game-over": winner }); }
         }
     });
 }

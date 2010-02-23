@@ -107,6 +107,8 @@
             return;
         }
         
+        if("game-over" in msg.content) { alert("Game Over. Player " + msg.content["game-over"] + " won."); return; }
+        
         game.board[msg.content.row][msg.content.col].symbol(msg.content.turn, "server");
     });
     
