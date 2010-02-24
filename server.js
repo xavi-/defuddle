@@ -236,7 +236,7 @@ chn.onCreate(function(id, channel) {
 
 function createTicTacToeGame(channel) {
     var ttt = require("./game-lib/tic-tac-toe");
-    var players, game;
+    var players, game = new ttt.Game(new ttt.Board());
     
     channel.onReceive(function(msg, sendMoreInfo) {
         if("clear" in msg.content) {        
@@ -246,7 +246,6 @@ function createTicTacToeGame(channel) {
             var canidates = Object.keys(users);
             if(canidates.length < 2) { return; }
             
-            game = new ttt.Game(new ttt.Board());
             game.reset();
             
             players = { x: canidates[0], o: canidates[1] };
