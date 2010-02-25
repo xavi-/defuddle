@@ -50,9 +50,8 @@
             this.whosNext = (this.whosTurn === "X") ? "O" : "X";
         }
     
-        function Game(board) {
-            
-            this.board = board;
+        function Game() {
+            this.board = new Board();
             
             this.whosTurn = "";
             
@@ -66,7 +65,7 @@
             
             for(var r = 0; r < 3; r++) {
                 for(var c = 0; c < 3; c++) {
-                    board[r][c].onChange.add((function(game) { 
+                    this.board[r][c].onChange.add((function(game) { 
                         return function(e) {
                             if(e.source === "reset") { return; }
                             game.onPlacement.trigger({cell: this, source: e.source });

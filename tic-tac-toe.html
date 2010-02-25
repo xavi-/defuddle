@@ -104,7 +104,7 @@
     });
     
     var ch = new Channel("tic-tac-toe");
-    var game = new ttt.Game(new ttt.Board());
+    var game = new ttt.Game();
     game.onReset.add(function() { 
         $(".winner").remove();
         $("#turn-status").text("It's " + this.whosTurn + " turn."); 
