@@ -18,6 +18,8 @@
         
         this.col = col;
         
+        this.isEmpty = function() { return !symbol; };
+        
         this.symbol = function() {
             if(arguments.length === 0) { return symbol; }
             

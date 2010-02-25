@@ -264,10 +264,11 @@ function createTicTacToeGame(channel) {
                 msg.content = null; return; 
             }
             
-            if(game.board[msg.content.row][msg.content.col].symbol()) { 
-                sys.puts("Cheater! bad cell : row: " + msg.content.row + "; col: " + msg.content.col); 
+            var row = msg.content.row, col = msg.content.col;
+            if(!game.board[row][col].isEmpty()) { 
+                sys.puts("Cheater! bad cell : row: " + row + "; col: " + col); 
                 msg.content = null; return; 
-            } else { game.board[msg.content.row][msg.content.col].symbol(msg.content.turn); }
+            } else { game.board[row][col].symbol(msg.content.turn); }
             
             var winner = game.isGameOver();
             if(winner) { sendMoreInfo("0", { "game-over": winner }); }

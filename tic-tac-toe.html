@@ -89,7 +89,10 @@
         for(var r = 0; r < 3; r++) {
             for(var c = 0; c < 3; c++) {
                 $(board[r][c].div).click((function(board, row, col, game) {
-                    return function() { board[row][col].symbol(game.whosTurn, "user"); };
+                    return function() { 
+                        if(board[row][col].isEmpty()) { board[row][col].symbol(game.whosTurn, "user"); }
+                        return false;
+                    };
                 })(board, r, c, game));
             }
         }
