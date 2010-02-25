@@ -18,6 +18,8 @@
         width: 150px;
         height: 150px;
         z-index: 0;
+        -moz-user-select: none;
+        -webkit-user-select: none;
     }
     
     .winner,
@@ -46,7 +48,7 @@
 </head>
 <body>
     <span id="turn-status"></span>
-    <div id="board"></div>
+    <div id="board" unselectable="on"></div>
     <a id="clear" href="404.html">New Game</a>
     <br/>
     <span id="player-status"></span>
