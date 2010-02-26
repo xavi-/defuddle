@@ -225,7 +225,29 @@
     }
     
     var Game = (function() {
-        function Game() {
+        function physicsLoop(game) {
+            var wasCompressed = compactBoard(game.board);
+            if(wasCompressed) { return true; }
+            
+            var scored = findMatches(game.board);
+            if(scored) { return true; }
+            
+            game.onFreeze.trigger();
+            return false;
+        }
+        
+        function instantPhysics() {
+            while(physicsLoop(this));
+        }
+        
+        function timedPhysics() {
+            var game = this;
+            var loop = setInterval(function() {                    
+                if(!physicsLoop(game)) { clearInterval(loop); }
+            }, 500);
+        }
+        
+        function Game(useInstantPhysics) {
             this.board = new Board(15, 9);
             
             this.score = 0;
@@ -235,24 +257,15 @@
             this.piece = null;
             
             this.onFreeze = new Event(this);
+            
+            this.runPhysics = (useInstantPhysics ? instantPhysics : timedPhysics);
         }
         
         Game.prototype.newPiece = function newPiece(blocks) {
             this.piece = new Piece(this.board, blocks);
             
             var game = this;
-            this.piece.onPlacement.add(function() {
-                var loop = setInterval(function() {
-                    var wasCompressed = compactBoard(game.board);
-                    if(wasCompressed) { return; }
-                    
-                    var scored = findMatches(game.board);
-                    if(scored) { return; }
-                    
-                    game.onFreeze.trigger();
-                    clearInterval(loop);
-                }, 500);
-            });
+            this.piece.onPlacement.add(function() { game.runPhysics(); });
         };
         
         Game.prototype.isGameOver = function isGameOver() {
