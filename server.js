@@ -58,6 +58,8 @@ srv.urls["/tic-tac-toe.html"] = StaticFileHandler("./tic-tac-toe.html", "text/ht
 
 srv.urls["/game-lib/tic-tac-toe.js"] = StaticFileHandler("./game-lib/tic-tac-toe.js", "application/x-javascript");
 
+srv.urls["/game-lib/block.js"] = StaticFileHandler("./game-lib/block.js", "application/x-javascript");
+
 // /channel/<session-id>/send?msg=<json> => returns an info-id
 // /channel/<session-id>/read?info-id=<int-id> => returns a list of json messages
 var chn = (function() {
@@ -229,10 +231,17 @@ var chn = (function() {
 })();
 
 chn.onCreate(function(id, channel) {
-    if(id === "pictionary") { 
-        channel.onReceive(function(msg) { if("clear" in msg.content) { channel.data = channel.data.splice(-1); } });
-    } else if(id === "tic-tac-toe") { createTicTacToeGame(channel); }
+    if(id === "pictionary") { createBlockGame(channel); }
+    else if(id === "tic-tac-toe") { createTicTacToeGame(channel); }
 });
+
+function createBlockGame(channel) {
+    var blk = require("./game-lib/block");
+    
+    channel.onReceive(function(msg, sendMoreInfo) {
+        if("clear" in msg.content) { channel.data = channel.data.splice(-1); }
+    });
+}
 
 function createTicTacToeGame(channel) {
     var ttt = require("./game-lib/tic-tac-toe");
