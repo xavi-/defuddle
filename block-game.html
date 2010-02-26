@@ -67,6 +67,8 @@
             
             clearInterval(loop);
         }, 500);
+        
+        game.piece.onPlacement.add(function() { clearInterval(loop); });
     });
     game.onFreeze.trigger();
     
