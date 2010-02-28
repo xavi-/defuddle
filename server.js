@@ -33,7 +33,9 @@ var srv = (function() {
 
 var StaticFileHandler = (function() {
     function Handler(path, mime, req, res) {
-        fs.readFile(path, "utf8").addCallback(function(data) {
+        fs.readFile(path, function(err, data) {
+            if(err) { throw err; };
+            
             res.sendHeader(200, { "Conent-Length": data.length,
                                   "Content-Type": mime });
             res.write(data, "utf8");
