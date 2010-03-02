@@ -233,8 +233,9 @@ var chn = (function() {
 })();
 
 chn.onCreate(function(id, channel) {
-    if(id === "pictionary") { createBlockGame(channel); }
+    if(id === "pictionary") { createPictionary(channel); }
     else if(id === "tic-tac-toe") { createTicTacToeGame(channel); }
+    else if(id === "block") { createBlockGame(channel); }
 });
 
 function createBlockGame(channel) {
@@ -284,6 +285,12 @@ function createTicTacToeGame(channel) {
             var winner = game.isGameOver();
             if(winner) { sendMoreInfo("0", { "game-over": winner }); }
         }
+    });
+}
+
+function createPictionary(channel) {
+    channel.onReceive(function(msg) {
+        if("clear" in msg.content) { channel.data = channel.data.splice(-1); } 
     });
 }
 
