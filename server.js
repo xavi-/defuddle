@@ -50,7 +50,7 @@ var StaticFileHandler = (function() {
 
 srv.urls["/"] = srv.urls["/index.html"] = StaticFileHandler("./index.html", "text/html");
 
-srv.urls["/client.js"] = StaticFileHandler("./client.js", "application/javascript");
+srv.urls["/client.js"] = StaticFileHandler("./client.js", "application/x-javascript");
 
 srv.urls["/pictionary.html"] = StaticFileHandler("./pictionary.html", "text/html");
 
