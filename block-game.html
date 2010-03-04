@@ -1,17 +1,22 @@
 <html>
 <head>
 <style>
-    #board-container { border: thin solid black; float: left; }
+    .board-container { border: thin solid black; float: left; }
     .board { position: relative; }
     .block { position: absolute; width: 20px; height: 20px; }
     .green { background-color: green; }
     .blue { background-color: blue; }
     .red { background-color: red; }
+    
+    #new-game { float: left; clear: both; }
 </style>
 </head>
 <body>
-<div id="board-container"></div>
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js" type="text/javascript"></script>
+<div id="gameA" class="board-container"></div>
+<div id="gameB" class="board-container"></div>
+<a id="new-game" href="#">New Game</a>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js" type="text/javascript"></script>
+<script src="/client.js" type="text/javascript"></script>
 <script src="/game-lib/block.js" type="text/javascript"></script>
 <script>
 (function() {
@@ -52,39 +57,98 @@
             .css({ width: (20 * board.columns) + "px",
                    height: (20 * board.rows) + "px" });
     });
-
+    var ch = new Channel("block");
     var game = new blk.Game();
+    var gameB = new blk.Game();
+    
+    ch.addListener(function(msg) {
+        if("clear" in msg.content) { game.reset(); gameB.reset(); return; }
         
+        if("new-game" in msg.content) {
+            game.piece.queue = [].concat(msg.content["init-pieces"]);
+            game.onFreeze.trigger();
+            
+            gameB.piece.queue = [].concat(msg.content["init-pieces"]);
+            gameB.onFreeze.trigger();
+            return;
+        }
+        
+        if("new-pieces" in msg.content) {
+            Array.prototype.push.apply(game.piece.queue, msg.content["new-pieces"]);
+            Array.prototype.push.apply(gameB.piece.queue, msg.content["new-pieces"]);
+            
+            return;
+        }
+        
+        if("new-piece" in msg.content) {
+            gameB.runAction(function(game) {
+                game.piece.create(msg.content["new-piece"], "server");
+            });
+            
+            return;
+        }
+        
+        if("piece-placed" in msg.content) {
+            gameB.runAction(function(game) {
+                game.piece.move(msg.content["piece-placed"], "server");
+                game.piece.onPlacement.trigger("server");
+            });
+            return;
+        }
+        
+        //if(msg.userId !== ch.userId()) { gameB.piece[msg.content.move]("server"); }
+    });
+    
     game.onFreeze.add(function() {
         if(game.isGameOver()) { return; }
         
-        game.newPiece([ Math.floor(Math.random() * game.colors.length),
-                        Math.floor(Math.random() * game.colors.length),
-                        Math.floor(Math.random() * game.colors.length) ]);
-                        
+        game.piece.create(game.piece.queue.shift(), "user");
+        /*
         var loop = setInterval(function() {
-            if(game.piece.isFalling) { game.piece.down(); return; }
+            if(game.piece.isFalling) { game.piece.down("user"); return; }
             
             clearInterval(loop);
-        }, 500);
+        }, 2000);
         
-        game.piece.onPlacement.add(function() { clearInterval(loop); });
+        game.piece.onPlacement.once(function() { clearInterval(loop); });*/
     });
-    game.onFreeze.trigger();
     
+    game.piece.onCreate.add(function(e) {
+        if(e.source === "user") { ch.send({ "new-piece": e.blocks }); }
+    });
+    //game.piece.onMove.add(function(e) { if(e.source === "user") {console.log("send: " + e.dir); ch.send({ move: e.dir }); } });
+    game.piece.onPlacement.add(function(e) {
+        ch.send({ "piece-placed": { row: e.row, col: e.col } });
+    });
+    
+    gameB.onFreeze.add(function() {
+        if(gameB.isGameOver()) { return; }
+        
+        gameB.piece.create(gameB.piece.queue.shift(), "server");
+    });
     
     $(document).keypress(function(e) {
         var code = e.keyCode || e.which;
-            
+        var chr = String.fromCharCode(code).toLowerCase();
+        
         if(!game.piece.isFalling) { return; }
         
-        if(code === 37) { game.piece.left(); } // LEFT
-        else if(code === 38) { game.piece.rotate(); } // UP
-        else if(code === 39) { game.piece.right(); } // RIGHT
-        else if(code === 40) { game.piece.down(); } // DOWN
+        if(chr === "a") { game.piece.left("user"); } // LEFT
+        else if(chr === "w") { game.piece.rotate("user"); } // UP
+        else if(chr === "d") { game.piece.right("user"); } // RIGHT
+        else if(chr === "s") { game.piece.down("user"); } // DOWN
     });
     
-    $("#board-container").append(game.board.div);
+    $("#gameA").append(game.board.div);
+    $("#gameB").append(gameB.board.div);
+    
+    $("#new-game").click(function() {
+        game.reset();
+        gameB.reset();
+        ch.clear();
+    });
+    
+    ch.start();
 })();    
 </script>
 </body>

@@ -96,24 +96,37 @@
     var Piece = (function() {
         var colors = ["green", "blue", "red"];
         
-        function Piece(board, blocks) {
+        function Piece(board) {
             this.board = board;
         
             this.row = 0;
             this.col = 4;
             
-            this.isFalling = true;
-                        
+            this.isFalling = false;
+            
+            this.onCreate = new Event(this);
+            
+            this.onMove = new Event(this);
+            
             this.onPlacement = new Event(this);
+        }
+        
+        Piece.prototype.create = function(blocks, source) {
+            var board = this.board;
+            
+            this.row = 0;
+            this.col = 4;
+            
+            this.isFalling = true;
             
             board[0][4].color(colors[blocks[0]]);
             board[1][4].color(colors[blocks[1]]);
             board[2][4].color(colors[blocks[2]]);
             
-            return this;
+            this.onCreate.trigger({ blocks: blocks, source: source });
         };
         
-        Piece.prototype.left = function left() {
+        Piece.prototype.left = function left(source) {
             var row = this.row, col = this.col, board = this.board;
             
             if(col - 1 < 0) { return; }
@@ -126,18 +139,22 @@
             board[row + 2][col].pos(row + 2, col - 1);
             
             this.col -= 1;
+            
+            this.onMove.trigger({ dir: "left", source: source });
         };
         
-        Piece.prototype.rotate = function rotate() {
+        Piece.prototype.rotate = function rotate(source) {
             var row = this.row, col = this.col, board = this.board;
             
             var tmp = board[row][col].color();
             board[row][col].color(board[row + 1][col].color());
             board[row + 1][col].color(board[row + 2][col].color());
             board[row + 2][col].color(tmp);
+            
+            this.onMove.trigger({ dir: "rotate", source: source });
         };
         
-        Piece.prototype.right = function right() {
+        Piece.prototype.right = function right(source) {
             var row = this.row, col = this.col, board = this.board;
             
             if(col + 1 >= board.columns) { return; }
@@ -150,14 +167,16 @@
             board[row + 2][col].pos(row + 2, col + 1);
             
             this.col += 1;
+            
+            this.onMove.trigger({ dir: "right", source: source });
         };
         
-        Piece.prototype.down = function down() {
+        Piece.prototype.down = function down(source) {
             var row = this.row, col = this.col, board = this.board;
             
             this.isFalling = false;
-            if(row + 3 >= board.rows) { this.onPlacement.trigger(); return; }
-            if(!board[row + 3][col].isEmpty) { this.onPlacement.trigger(); return; }
+            if(row + 3 >= board.rows) { this.onPlacement.trigger({ row: row, col: col }); return; }
+            if(!board[row + 3][col].isEmpty) { this.onPlacement.trigger({ row: row, col: col }); return; }
             this.isFalling = true;
                             
             board[row + 2][col].pos(row + 3, col);
@@ -165,6 +184,18 @@
             board[row + 0][col].pos(row + 1, col);
             
             this.row += 1;
+            
+            this.onMove.trigger({ dir: "down", source: source });
+        };
+        
+        Piece.prototype.move = function(pos, source) {
+            var row = this.row, col = this.col, board = this.board;
+            
+            board[row + 0][col].pos(pos.row + 0, pos.col);
+            board[row + 1][col].pos(pos.row + 1, pos.col);
+            board[row + 2][col].pos(pos.row + 2, pos.col);
+            
+            this.onMove.trigger({ dir: "???", source: source });
         };
         
         Piece.colors = colors;
@@ -241,32 +272,60 @@
         }
         
         function timedPhysics() {
+            if(this.physicsTimer) { return; }
+            
             var game = this;
             var loop = setInterval(function() {                    
-                if(!physicsLoop(game)) { clearInterval(loop); }
+                if(!physicsLoop(game)) { clearInterval(loop); game.physicsTimer = null; }
             }, 500);
+            
+            this.physicsTimer = loop;
         }
         
         function Game(useInstantPhysics) {
+            var actions = [];
+            
             this.board = new Board(15, 9);
             
             this.score = 0;
             
-            this.colors = Piece.colors;
+            this.piece = new Piece(this.board);
             
-            this.piece = null;
+            this.isFrozen = true;
             
             this.onFreeze = new Event(this);
             
             this.runPhysics = (useInstantPhysics ? instantPhysics : timedPhysics);
-        }
-        
-        Game.prototype.newPiece = function newPiece(blocks) {
-            this.piece = new Piece(this.board, blocks);
+            
+            this.runAction = function(action) {
+                if(useInstantPhysics || this.isFrozen) { action(this); }
+                else { actions.push(action); }
+            };
             
             var game = this;
-            this.piece.onPlacement.add(function() { game.runPhysics(); });
-        };
+            this.piece.onPlacement.add(function() {
+                game.isFrozen = false;
+                game.runPhysics(); 
+            });
+            this.onFreeze.add(function() { game.isFrozen = true; });
+            this.onFreeze.add(function() {
+                if(actions.length > 0) { (actions.shift())(this); } 
+            });
+        }
+        
+        Game.colors = Piece.colors;
+        
+        Game.prototype.reset = function reset() {
+            this.piece.isFalling = false;
+            this.isFrozen = true;
+            clearInterval(this.physicsTimer);
+        
+            for(var r = 0; r < this.board.rows; r++) {
+                for(var c = 0; c < this.board.columns; c++) {
+                    this.board[r][c].destroy(); 
+                }
+            }
+        }
         
         Game.prototype.isGameOver = function isGameOver() {
             return !Piece.isRoomAvailable(this.board);

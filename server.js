@@ -232,7 +232,7 @@ var chn = (function() {
     return { channels: channels, onCreate: function(callback) { _onCreate.push(callback); } };
 })();
 
-chn.onCreate(function(id, channel) {
+chn.onCreate(function(id, channel) { sys.puts("New Channel called: " + id);
     if(id === "pictionary") { createPictionary(channel); }
     else if(id === "tic-tac-toe") { createTicTacToeGame(channel); }
     else if(id === "block") { createBlockGame(channel); }
@@ -240,9 +240,46 @@ chn.onCreate(function(id, channel) {
 
 function createBlockGame(channel) {
     var blk = require("./game-lib/block");
+    var players, game = { a: new blk.Game(true), b: new blk.Game(true) };
+    var piecesPlaced = 0;
+    
+    function createPieces() {
+        var pieces = [];
+        
+        for(var i = 0; i < 5; i++) {
+            pieces.push([ Math.floor(Math.random() * blk.Game.colors.length),
+                          Math.floor(Math.random() * blk.Game.colors.length),
+                          Math.floor(Math.random() * blk.Game.colors.length) ]);
+        }
+        
+        return pieces;
+    }
     
     channel.onReceive(function(msg, sendMoreInfo) {
-        if("clear" in msg.content) { channel.data = channel.data.splice(-1); }
+        if("clear" in msg.content) {
+            channel.data = channel.data.splice(-1);
+            
+            var users = channel.users();
+            var canidates = Object.keys(users);
+            if(canidates.length < 2) { return; }
+            
+            game.a.reset();
+            game.b.reset();
+            
+            players = { a: canidates[0], b: canidates[1] };
+            sendMoreInfo("0", { "new-game": players, "init-pieces": createPieces() });
+            sys.puts("New Block Game: a: " + players.a + "; b: " + players.b);
+            
+            return;
+        }
+        
+        if("piece-placed" in msg.content) {
+            piecesPlaced += 1;
+            sys.puts("piece placed");
+            if(piecesPlaced % 4 === 0) { sendMoreInfo("0", { "new-pieces": createPieces() }); sys.puts("sent more pieces"); }
+            
+            return;
+        }
     });
 }
 
