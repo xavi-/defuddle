@@ -42,9 +42,28 @@
             return 0 <= pos.row && pos.row < 8 && 0 <= pos.col && pos.col < 8;
         }
         
+        function isOccupiable(board, piece) {
+            return function(m) { return board[m.row][m.col].isEmpty || board[m.row][m.col].color !== piece.color; };
+        }
+        
         var pieces = {};
         pieces["pawn"] = function() {
-            return [];
+            var pos = this.pos(), row = pos.row, col = pos.col;
+            var dir = (this.color === "black" ? -1 : 1);
+            var moves = [ { row: row + dir, col: col + 1 }, { row: row + dir, col: col - 1 } ];
+            moves = moves.filter(onBoard)
+                         .filter(isOccupiable(this.board, this))
+                         .filter(function(m) { return !m.isEmpty });
+            if(this.board[row + dir][col].isEmpty) { 
+                moves.push({ row: row + dir, col: col }); 
+                
+                if(!this.hasMoved && this.board[row + dir * 2][col].isEmpty) {
+                    moves.push({ row: row + dir * 2, col: col }); 
+                }
+            }
+            
+            
+            return moves;
         };
         
         pieces["knight"] = function() {
@@ -53,10 +72,8 @@
                           { row: row + 2, col: col - 1 }, { row: row + 2, col: col + 1 },
                           { row: row - 1, col: col - 2 }, { row: row - 1, col: col + 2 },
                           { row: row + 1, col: col - 2 }, { row: row + 1, col: col + 2 } ];
-            var board = this.board, piece = this;
-            return moves.filter(onBoard).filter(function(m) {
-                return board[m.row][m.col].isEmpty || board[m.row][m.col].color !== piece.color;
-            });
+            
+            return moves.filter(onBoard).filter(isOccupiable(this.board, this));
         };
         
         pieces["bishop"] = function() {
@@ -68,7 +85,7 @@
         };
         
         pieces["queen"] = function() {
-            return [];
+            return pieces["bishop"].call(this).concat(pieces["rook"].call(this));
         };
         
         pieces["king"] = function() {
@@ -76,10 +93,8 @@
             var moves = [ { row: row + 1, col: col - 1 }, { row: row + 1, col: col }, { row: row + 1, col: col + 1 },
                           { row: row,     col: col - 1 },                             { row: row,     col: col + 1 },
                           { row: row - 1, col: col - 1 }, { row: row - 1, col: col }, { row: row - 1, col: col + 1 } ];
-            var board = this.board, piece = this;
-            return moves.filter(onBoard).filter(function(m) {
-                return board[m.row][m.col].isEmpty || board[m.row][m.col].color !== piece.color;
-            });
+            
+            return moves.filter(onBoard).filter(isOccupiable(this.board, this));
         };
         
         function Piece(type, color, row, col, board) {
@@ -88,6 +103,8 @@
             this.type = type;
             
             this.color = color;
+            
+            this.hasMoved = false;
          
             this.onMove = new Event(this);
             
@@ -95,6 +112,9 @@
             
             this.pos = function() {
                 if(arguments.length === 0) { return { row: row, col: col }; }
+                
+                if(row == arguments[0] && col == arguments[1]) { return; }
+                else { this.hasMoved = true; }
                 
                 board[row][col] = Board.emptyCell;
                 
@@ -120,7 +140,8 @@
                 this.onDestroy.trigger();
             };
             
-            this.pos(row, col);
+            board[row][col] = this;
+            this.onMove.trigger({ row: row, col: col });
         }
         Piece.onCreate = new Event();
         
@@ -139,10 +160,10 @@
     })();
     
     function Board() {        
-        for(var r = 0; r < 8; r++) {
+        for(var r = -1; r <= 8; r++) {
             this[r] = [];
             
-            for(var c = 0; c < 8; c++) { this[r][c] = Board.emptyCell; }
+            for(var c = -1; c <= 8; c++) { this[r][c] = Board.emptyCell; }
         }
         
         Board.onCreate.trigger(this);
