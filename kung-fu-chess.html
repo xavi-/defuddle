@@ -42,7 +42,7 @@
             return 0 <= pos.row && pos.row < 8 && 0 <= pos.col && pos.col < 8;
         }
         
-        function isOccupiable(board, piece) {
+        function canOccupyGen(board, piece) {
             return function(m) { return board[m.row][m.col].isEmpty || board[m.row][m.col].color !== piece.color; };
         }
         
@@ -52,7 +52,7 @@
             var dir = (this.color === "black" ? -1 : 1);
             var moves = [ { row: row + dir, col: col + 1 }, { row: row + dir, col: col - 1 } ];
             moves = moves.filter(onBoard)
-                         .filter(isOccupiable(this.board, this))
+                         .filter(canOccupyGen(this.board, this))
                          .filter(function(m) { return !m.isEmpty });
             if(this.board[row + dir][col].isEmpty) { 
                 moves.push({ row: row + dir, col: col }); 
@@ -72,7 +72,7 @@
                           { row: row - 1, col: col - 2 }, { row: row - 1, col: col + 2 },
                           { row: row + 1, col: col - 2 }, { row: row + 1, col: col + 2 } ];
             
-            return moves.filter(onBoard).filter(isOccupiable(this.board, this));
+            return moves.filter(onBoard).filter(canOccupyGen(this.board, this));
         };
         (function() { // Available moves code for Bishop and Rook pieces
             function getContiguousMoves(piece, canOccupy, moveGen) {
@@ -91,7 +91,7 @@
             }
             
             function getMoves(piece, moveGens) {
-                var canOccupy = isOccupiable(piece.board, piece), moves = [];
+                var canOccupy = canOccupyGen(piece.board, piece), moves = [];
                 
                 for(var i = 0; i < moveGens.length; i++) {
                     Array.prototype.push.apply(moves, getContiguousMoves(piece, canOccupy, moveGens[i]));
@@ -129,7 +129,7 @@
                           { row: row,     col: col - 1 },                             { row: row,     col: col + 1 },
                           { row: row - 1, col: col - 1 }, { row: row - 1, col: col }, { row: row - 1, col: col + 1 } ];
             
-            return moves.filter(onBoard).filter(isOccupiable(this.board, this));
+            return moves.filter(onBoard).filter(canOccupyGen(this.board, this));
         };
         
         function Piece(type, color, row, col, board) {
