@@ -62,7 +62,6 @@
                 }
             }
             
-            
             return moves;
         };
         
@@ -75,14 +74,50 @@
             
             return moves.filter(onBoard).filter(isOccupiable(this.board, this));
         };
-        
-        pieces["bishop"] = function() {
-            return [];
-        };
-        
-        pieces["rook"] = function() {
-            return [];
-        };
+        (function() { // Available moves code for Bishop and Rook pieces
+            function getContiguousMoves(piece, canOccupy, moveGen) {
+                var curPos = piece.pos(), moves = [];
+                
+                for(var i = 1; i <= 7; i++) {
+                    var move = moveGen.call(curPos, i);
+                    if(!onBoard(move)) { break; }
+                    
+                    if(canOccupy(move)) { moves.push(move); }
+                    
+                    if(!piece.board[move.row][move.col].isEmpty) { break; }
+                }
+                
+                return moves;
+            }
+            
+            function getMoves(piece, moveGens) {
+                var canOccupy = isOccupiable(piece.board, piece), moves = [];
+                
+                for(var i = 0; i < moveGens.length; i++) {
+                    Array.prototype.push.apply(moves, getContiguousMoves(piece, canOccupy, moveGens[i]));
+                }
+                
+                return moves;
+            }
+            
+            pieces["bishop"] = (function() {
+                var moveGens = [ function(i) { return { row: this.row + i, col: this.col + i }; }, 
+                                 function(i) { return { row: this.row + i, col: this.col - i }; }, 
+                                 function(i) { return { row: this.row - i, col: this.col + i }; },
+                                 function(i) { return { row: this.row - i, col: this.col - i }; } ];
+                
+                return function() { return getMoves(this, moveGens); };
+            })();
+            
+            pieces["rook"] = (function() {
+                var moveGens = [ function(i) { return { row: this.row + i, col: this.col }; }, 
+                                 function(i) { return { row: this.row - i, col: this.col }; }, 
+                                 function(i) { return { row: this.row, col: this.col + i }; },
+                                 function(i) { return { row: this.row, col: this.col - i }; } ];
+                
+                return function() { return getMoves(this, moveGens); };
+            })();
+        })();
         
         pieces["queen"] = function() {
             return pieces["bishop"].call(this).concat(pieces["rook"].call(this));
