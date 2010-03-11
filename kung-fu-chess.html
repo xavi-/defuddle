@@ -1,0 +1,219 @@
+<html>
+<head>
+<style>
+    #board {
+        width: 400px;
+        height: 400px;
+        border: 1px solid black;
+    }
+    
+    .piece {
+        position: absolute;
+        background-color: blue;
+    }
+</style>
+</head>
+<body>
+<div id="board"></div>
+<script type="text/javascript" src="hexlib/hex.core.js"></script>
+<script type="text/javascript" src="hexlib/hex.element.js"></script>
+<script type="text/javascript" src="hexlib/hex.event.js"></script>
+<script type="text/javascript" src="hexlib/hex.grid.js"></script>
+<script type="text/javascript" src="hexlib/hex.grid.hexagonal.js"></script>
+<script type="text/javascript" src="hexlib/hex.grid.rectangular.js"></script>
+<script type="text/javascript" src="hexlib/hex.grid.skew.js"></script>
+<script type="text/javascript" src="hexlib/hex.grid.triangular.js"></script>
+<script type="text/javascript" src="hexlib/hex.region.js"></script>
+<script type="text/javascript" src="hexlib/hex.sprite.js"></script>
+<script type="text/javascript">
+(function() {
+    function Event(ctx) {
+        var listeners = [];
+        
+        this.add = function(listener) { listeners.push(listener); };
+        
+        this.trigger = function trigger(e) {
+            for(var i = 0; i < listeners.length; i++) { listeners[i].call(ctx, e, ctx); }
+        };
+    }
+    
+    var Piece = (function() {
+        function onBoard(pos) {
+            return 0 <= pos.row && pos.row < 8 && 0 <= pos.col && pos.col < 8;
+        }
+        
+        var pieces = {};
+        pieces["pawn"] = function() {
+            return [];
+        };
+        
+        pieces["knight"] = function() {
+            var pos = this.pos(), row = pos.row, col = pos.col;
+            var moves = [ { row: row - 2, col: col - 1 }, { row: row - 2, col: col + 1 }, 
+                          { row: row + 2, col: col - 1 }, { row: row + 2, col: col + 1 },
+                          { row: row - 1, col: col - 2 }, { row: row - 1, col: col + 2 },
+                          { row: row + 1, col: col - 2 }, { row: row + 1, col: col + 2 } ];
+            var board = this.board, piece = this;
+            return moves.filter(onBoard).filter(function(m) {
+                return board[m.row][m.col].isEmpty || board[m.row][m.col].color !== piece.color;
+            });
+        };
+        
+        pieces["bishop"] = function() {
+            return [];
+        };
+        
+        pieces["rook"] = function() {
+            return [];
+        };
+        
+        pieces["queen"] = function() {
+            return [];
+        };
+        
+        pieces["king"] = function() {
+            var pos = this.pos(), row = pos.row, col = pos.col;
+            var moves = [ { row: row + 1, col: col - 1 }, { row: row + 1, col: col }, { row: row + 1, col: col + 1 },
+                          { row: row,     col: col - 1 },                             { row: row,     col: col + 1 },
+                          { row: row - 1, col: col - 1 }, { row: row - 1, col: col }, { row: row - 1, col: col + 1 } ];
+            var board = this.board, piece = this;
+            return moves.filter(onBoard).filter(function(m) {
+                return board[m.row][m.col].isEmpty || board[m.row][m.col].color !== piece.color;
+            });
+        };
+        
+        function Piece(type, color, row, col, board) {
+            this.board = board;
+            
+            this.type = type;
+            
+            this.color = color;
+         
+            this.onMove = new Event(this);
+            
+            this.onDestroy = new Event(this);
+            
+            this.pos = function() {
+                if(arguments.length === 0) { return { row: row, col: col }; }
+                
+                board[row][col] = Board.emptyCell;
+                
+                row = arguments[0];
+                col = arguments[1];
+                
+                board[row][col].destroy();
+                board[row][col] = this;
+                
+                this.onMove.trigger({ row: row, col: col });
+            };
+            
+            this.availableMoves = pieces[type];
+            
+            Piece.onCreate.trigger(this);
+        
+            this.destroy = function() {
+                var pos = this.pos();
+                
+                this.board[pos.row][pos.col] = Board.emptyCell;
+                row = -1; col = -1;
+                
+                this.onDestroy.trigger();
+            };
+            
+            this.pos(row, col);
+        }
+        Piece.onCreate = new Event();
+        
+        Piece.prototype.isEmpty = false;
+        
+        Piece.prototype.validMove = function(row, col) {
+            var moves = this.availableMoves();
+            for(var i = 0; i < moves.length; i++) {
+                if(moves[i].row === row && moves[i].col === col) { return true; }
+            }
+            
+            return false;
+        };
+        
+        return Piece;
+    })();
+    
+    function Board() {        
+        for(var r = 0; r < 8; r++) {
+            this[r] = [];
+            
+            for(var c = 0; c < 8; c++) { this[r][c] = Board.emptyCell; }
+        }
+        
+        Board.onCreate.trigger(this);
+    }
+    Board.onCreate = new Event();
+    Board.emptyCell = { isEmpty: true, destroy: function() { } };
+    
+    function Game() {
+        var backRow = [ "rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook" ];
+        
+        this.board = new Board();
+        
+        this.pieces = [];
+        
+        for(var c = 0; c < 8; c++) {
+            this.pieces.push(new Piece(backRow[c], "black", 7, c, this.board));
+            this.pieces.push(new Piece("pawn", "black", 6, c, this.board));
+            this.pieces.push(new Piece("pawn", "white", 1, c, this.board));
+            this.pieces.push(new Piece(backRow[c], "white", 0, c, this.board));
+        }
+        
+        Game.onCreate.trigger(this);
+    }
+    Game.onCreate = new Event();
+
+    var grid = hex.grid(document.getElementById("board"), { type: "rectangular" });
+    var region = hex.region(grid, { inside: function(x, y) { return x >= 0 && x < 8 && y >= 0 && y < 8; } });
+    
+    Piece.onCreate.add(function(piece) {
+        var div = document.createElement("div");
+        
+        div.className = "piece";
+        div.style.width = grid.tileWidth + "px";
+        div.style.height = grid.tileHeight + "px";
+        div.innerHTML = piece.type + "<br/>" + piece.color;
+        
+        piece.div = div;
+        piece.board.grid.root.appendChild(div);
+        
+        piece.onMove.add(function(pos) {            
+            var pos = grid.screenpos(pos.col, pos.row);
+            div.style.left = pos.x + "px";
+            div.style.top = pos.y + "px";
+        });
+    });
+    
+    Board.onCreate.add(function(board) {
+        board.grid = grid;
+    });
+    
+    Game.onCreate.add(function(game) {
+        var selectedPiece;
+        
+        game.board.grid.addEvent("tiledown", function(e, x, y) {
+            e.preventDefault();
+            
+            if(!game.board[y][x].isEmpty) { selectedPiece = game.board[y][x]; }
+        });
+        
+        game.board.grid.addEvent("tileup", function(e, x, y) {
+            e.preventDefault();
+            
+            if(x > 7 || x < 0 || y > 7 || y < 0) { return; }
+            
+            if(selectedPiece && selectedPiece.validMove(y, x)) { selectedPiece.pos(y, x); selectedPiece = null; }
+        });
+    });
+    
+    grid.reorient(0, grid.tileHeight * 7);
+    new Game();
+})();
+</script>
+</body>
+</html>
