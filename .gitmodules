@@ -1,0 +1,3 @@
+[submodule "hexlib"]
+	path = hexlib
+	url = git://github.com/jimbojw/hexlib.git
