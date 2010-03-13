@@ -141,6 +141,8 @@
             this.color = color;
             
             this.hasMoved = false;
+            
+            this.lastMoved = 0;
          
             this.onMove = new Event(this);
             
@@ -161,6 +163,7 @@
                 board[row][col] = this;
                 
                 this.onMove.trigger({ row: row, col: col });
+                this.lastMoved = new Date();
             };
             
             this.availableMoves = pieces[type];
@@ -256,7 +259,8 @@
         game.board.grid.addEvent("tiledown", function(e, x, y) {
             e.preventDefault();
             
-            if(!game.board[y][x].isEmpty) { selectedPiece = game.board[y][x]; }
+            var piece = game.board[y][x];
+            if(!piece.isEmpty && (new Date()) - piece.lastMoved >= 5000) { selectedPiece = piece; }
         });
         
         game.board.grid.addEvent("tileup", function(e, x, y) {
