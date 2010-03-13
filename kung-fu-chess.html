@@ -10,6 +10,7 @@
     .piece {
         position: absolute;
         background-color: blue;
+        text-align: center;
     }
 </style>
 </head>
@@ -163,9 +164,7 @@
             };
             
             this.availableMoves = pieces[type];
-            
-            Piece.onCreate.trigger(this);
-        
+                    
             this.destroy = function() {
                 var pos = this.pos();
                 
@@ -174,6 +173,8 @@
                 
                 this.onDestroy.trigger();
             };
+            
+            Piece.onCreate.trigger(this);
             
             board[row][col] = this;
             this.onMove.trigger({ row: row, col: col });
