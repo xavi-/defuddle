@@ -114,7 +114,7 @@
                 
         $("#turn-status").text("It's " + this.whosNext + " turn.");
     });
-    ch.addListener(function(msg) {
+    ch.onReceive(function(msg) {
         if("clear" in msg.content) { game.reset(); return; }
         
         if("new-game" in msg.content) {

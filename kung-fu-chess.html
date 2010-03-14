@@ -276,7 +276,7 @@
     grid.reorient(0, grid.tileHeight * 7);
     var game = new Game();
     
-    ch.addListener(function(msg) {
+    ch.onReceive(function(msg) {
         if("move" in msg.content) {
             var from = msg.content["move"].from, to = msg.content["move"].to;
             

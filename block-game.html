@@ -61,7 +61,7 @@
     var game = new blk.Game();
     var gameB = new blk.Game();
     
-    ch.addListener(function(msg) {
+    ch.onReceive(function(msg) {
         if("clear" in msg.content) { game.reset(); gameB.reset(); return; }
         
         if("new-game" in msg.content) {

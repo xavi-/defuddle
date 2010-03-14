@@ -73,7 +73,7 @@ $(function() {
             if(!points[id].offset) { points[id].offset = (new Date()).getTime(); }
         };
     })();
-    ch.addListener(drawPoints);
+    ch.onReceive(drawPoints);
     
     var sendPoint = (function() {
         var points = [], lastTime = 0;

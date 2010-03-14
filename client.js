@@ -4,7 +4,7 @@
     }
     
     function Channel(id) {
-        var listeners = [], lastInfoId = 0;
+        var onreceive = [], lastInfoId = 0;
         
         function listen() {        
             var client = xhr(),
@@ -20,7 +20,7 @@
                     var info = JSON.parse(client.responseText);
                     
                     for(var i = 0; i < info.length; i++) {
-                        for(var j = 0; j <  listeners.length; j++) { listeners[j](info[i].message); }
+                        for(var j = 0; j <  onreceive.length; j++) { onreceive[j](info[i].message); }
                         
                         if(info[i].infoId > lastInfoId) { lastInfoId = info[i].infoId; }
                     }
@@ -35,7 +35,7 @@
         
         this.userId = function() { return document.cookie; };
         
-        this.addListener = function addListener(l) { listeners.push(l); };
+        this.onReceive = function onReceive(l) { onreceive.push(l); };
         
         this.start = function start() { listen(); };
         
