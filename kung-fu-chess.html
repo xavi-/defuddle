@@ -16,16 +16,8 @@
 </head>
 <body>
 <div id="board"></div>
-<script type="text/javascript" src="hexlib/src/hex.core.js"></script>
-<script type="text/javascript" src="hexlib/src/hex.element.js"></script>
-<script type="text/javascript" src="hexlib/src/hex.event.js"></script>
-<script type="text/javascript" src="hexlib/src/hex.grid.js"></script>
-<script type="text/javascript" src="hexlib/src/hex.grid.hexagonal.js"></script>
-<script type="text/javascript" src="hexlib/src/hex.grid.rectangular.js"></script>
-<script type="text/javascript" src="hexlib/src/hex.grid.skew.js"></script>
-<script type="text/javascript" src="hexlib/src/hex.grid.triangular.js"></script>
-<script type="text/javascript" src="hexlib/src/hex.region.js"></script>
-<script type="text/javascript" src="hexlib/src/hex.sprite.js"></script>
+<script src="/client.js" type="text/javascript"></script>
+<script type="text/javascript" src="hexlib/src/hex.js"></script>
 <script type="text/javascript">
 (function() {
     function Event(ctx) {
@@ -156,18 +148,20 @@
                 
                 board[row][col] = Board.emptyCell;
                 
+                var oldPos = { row: row, col: col };
+                
                 row = arguments[0];
                 col = arguments[1];
                 
                 board[row][col].destroy();
                 board[row][col] = this;
                 
-                this.onMove.trigger({ row: row, col: col });
+                this.onMove.trigger({ source: arguments[2], oldPos: oldPos, newPos: { row: row, col: col } });
                 this.lastMoved = new Date();
             };
             
             this.availableMoves = pieces[type];
-                    
+            
             this.destroy = function() {
                 var pos = this.pos();
                 
@@ -180,7 +174,7 @@
             Piece.onCreate.trigger(this);
             
             board[row][col] = this;
-            this.onMove.trigger({ row: row, col: col });
+            this.onMove.trigger({ source: "creation", newPos: { row: row, col: col } });
         }
         Piece.onCreate = new Event();
         
@@ -230,6 +224,8 @@
 
     var grid = hex.grid(document.getElementById("board"), { type: "rectangular" });
     var region = hex.region(grid, { inside: function(x, y) { return x >= 0 && x < 8 && y >= 0 && y < 8; } });
+
+    var ch = new Channel("kung-fu-chess");
     
     Piece.onCreate.add(function(piece) {
         var div = document.createElement("div");
@@ -242,10 +238,12 @@
         piece.div = div;
         piece.board.grid.root.appendChild(div);
         
-        piece.onMove.add(function(pos) {            
-            var pos = grid.screenpos(pos.col, pos.row);
+        piece.onMove.add(function(e) {
+            var pos = grid.screenpos(e.newPos.col, e.newPos.row);
             div.style.left = pos.x + "px";
             div.style.top = pos.y + "px";
+            
+            if(e.source === "user") { ch.send({ move: { from: e.oldPos, to: e.newPos } }); }
         });
     });
     
@@ -268,12 +266,25 @@
             
             if(x > 7 || x < 0 || y > 7 || y < 0) { return; }
             
-            if(selectedPiece && selectedPiece.validMove(y, x)) { selectedPiece.pos(y, x); selectedPiece = null; }
+            if(selectedPiece && selectedPiece.validMove(y, x)) { 
+                selectedPiece.pos(y, x, "user");
+                selectedPiece = null; 
+            }
         });
     });
     
     grid.reorient(0, grid.tileHeight * 7);
-    new Game();
+    var game = new Game();
+    
+    ch.addListener(function(msg) {
+        if("move" in msg.content) {
+            var from = msg.content["move"].from, to = msg.content["move"].to;
+            
+            game.board[from.row][from.col].pos(to.row, to.col);
+        }
+    });
+    
+    ch.start();
 })();
 </script>
 </body>

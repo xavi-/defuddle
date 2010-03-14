@@ -58,6 +58,10 @@ srv.urls["/block-game.html"] = StaticFileHandler("./block-game.html", "text/html
 
 srv.urls["/tic-tac-toe.html"] = StaticFileHandler("./tic-tac-toe.html", "text/html");
 
+srv.urls["/kung-fu-chess.html"] = StaticFileHandler("./kung-fu-chess.html", "text/html");
+
+srv.urls["/hexlib/src/hex.js"] = StaticFileHandler("./hexlib/src/hex.js", "application/x-javascript");
+
 srv.urls["/game-lib/tic-tac-toe.js"] = StaticFileHandler("./game-lib/tic-tac-toe.js", "application/x-javascript");
 
 srv.urls["/game-lib/block.js"] = StaticFileHandler("./game-lib/block.js", "application/x-javascript");
