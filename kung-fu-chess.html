@@ -245,6 +245,10 @@
             
             if(e.source === "user") { ch.send({ move: { from: e.oldPos, to: e.newPos } }); }
         });
+        
+        piece.onDestroy.add(function(e) {
+            div.parentNode.removeChild(div);
+        });
     });
     
     Board.onCreate.add(function(board) {
