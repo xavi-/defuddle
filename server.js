@@ -240,7 +240,29 @@ chn.onCreate(function(id, channel) { sys.puts("New Channel called: " + id);
     if(id === "pictionary") { createPictionary(channel); }
     else if(id === "tic-tac-toe") { createTicTacToeGame(channel); }
     else if(id === "block") { createBlockGame(channel); }
+    else if(id === "kung-fu-chess") { createKungFuChessGame(channel); }
 });
+
+function createKungFuChessGame(channel) {
+    channel.onReceive(function(msg, sendMoreInfo) {
+        if("clear" in msg.content) {
+            channel.data = channel.data.splice(-1);
+            
+            var users = channel.users();
+            var canidates = Object.keys(users);
+            if(canidates.length < 2) { return; }
+            
+            players = {};
+            players[canidates[0]] = "white";
+            players[canidates[1]] = "black";
+            
+            sendMoreInfo("0", { "new-game": players  });
+            sys.puts("New Kung-Fu Chess Game: " + sys.inspect(players));
+            
+            return;
+        }
+    });
+}
 
 function createBlockGame(channel) {
     var blk = require("./game-lib/block");
