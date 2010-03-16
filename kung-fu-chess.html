@@ -77,7 +77,7 @@
             
             if(game.player !== selectedPiece.color) { return; }
             
-            if(selectedPiece.validMove(y, x)) { 
+            if(selectedPiece.isValidMove(y, x)) { 
                 selectedPiece.pos(y, x, "user");
                 selectedPiece = null; 
             }

@@ -301,7 +301,7 @@ function createKungFuChessGame(channel) {
                 msg.content = null; return;
             }
             
-            if(!piece.validMove(to.row, to.col)) {
+            if(!piece.isValidMove(to.row, to.col)) {
                 sys.puts("Cheater! invalid for piece : " + msg.userId);
                 sys.puts("piece: type: " + piece.type + "; from: " + sys.inspect(from) + "; to: " + sys.inspect(to));
                 msg.content = null; return;

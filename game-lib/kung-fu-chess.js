@@ -143,7 +143,7 @@
             this.availableMoves = pieces[type];
             
             this.destroy = function() {
-                var pos = this.pos();
+                var pos = this.pos();   
                 
                 this.board[pos.row][pos.col] = Board.emptyCell;
                 row = -1; col = -1;
@@ -160,7 +160,7 @@
         
         Piece.prototype.isEmpty = false;
         
-        Piece.prototype.validMove = function(row, col) {
+        Piece.prototype.isValidMove = function(row, col) {
             var moves = this.availableMoves();
             for(var i = 0; i < moves.length; i++) {
                 if(moves[i].row === row && moves[i].col === col) { return true; }
