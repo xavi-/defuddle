@@ -66,6 +66,8 @@ srv.urls["/game-lib/tic-tac-toe.js"] = StaticFileHandler("./game-lib/tic-tac-toe
 
 srv.urls["/game-lib/block.js"] = StaticFileHandler("./game-lib/block.js", "application/x-javascript");
 
+srv.urls["/game-lib/kung-fu-chess.js"] = StaticFileHandler("./game-lib/kung-fu-chess.js", "application/x-javascript");
+
 // /channel/<session-id>/send?msg=<json> => returns an info-id
 // /channel/<session-id>/read?info-id=<int-id> => returns a list of json messages
 var chn = (function() {
@@ -244,6 +246,14 @@ chn.onCreate(function(id, channel) { sys.puts("New Channel called: " + id);
 });
 
 function createKungFuChessGame(channel) {
+    var kfc = require("./game-lib/kung-fu-chess");
+    var players, game = new kfc.Game();
+    var LAG_TIME = 1000;
+    
+    function onBoard(pos) {
+        return 0 <= pos.row && pos.row < 8 && 0 <= pos.col && pos.col < 8;
+    }
+    
     channel.onReceive(function(msg, sendMoreInfo) {
         if("clear" in msg.content) {
             channel.data = channel.data.splice(-1);
@@ -251,6 +261,8 @@ function createKungFuChessGame(channel) {
             var users = channel.users();
             var canidates = Object.keys(users);
             if(canidates.length < 2) { return; }
+            
+            game.reset();
             
             players = {};
             players[canidates[0]] = "white";
@@ -260,6 +272,42 @@ function createKungFuChessGame(channel) {
             sys.puts("New Kung-Fu Chess Game: " + sys.inspect(players));
             
             return;
+        }
+        
+        if("move" in msg.content) {
+            if(!players[msg.userId]) {
+                sys.puts("Cheater! bad player : " + msg.userId);
+                sys.puts("players: " + sys.inspect(players));
+                msg.content = null; return;
+            }
+            
+            var from = msg.content["move"].from, to = msg.content["move"].to;
+            var piece = game.board[from.row][from.col];
+            if(!onBoard(from) || !onBoard(to)) {
+                sys.puts("Cheater! bad 'to' or 'from' location : " + msg.userId);
+                sys.puts("to: " + sys.inspect(to) + "; from: " + sys.inspect(from));
+                msg.content = null; return;
+            }
+            
+            if(players[msg.userId] !== piece.color) {
+                sys.puts("Cheater! piece wrong color : " + msg.userId);
+                sys.puts("piece color: " + piece.color + "; user color: " + players[msg.userId]);
+                msg.content = null; return;
+            }
+            
+            if(Date.now() - piece.lastMoved < (5000 - LAG_TIME)) {
+                sys.puts("Cheater! moved piece too quickly : " + msg.userId);
+                sys.puts("piece lastMoved: " + piece.lastMoved + "; time now: " + (new Date()));
+                msg.content = null; return;
+            }
+            
+            if(!piece.validMove(to.row, to.col)) {
+                sys.puts("Cheater! invalid for piece : " + msg.userId);
+                sys.puts("piece: type: " + piece.type + "; from: " + sys.inspect(from) + "; to: " + sys.inspect(to));
+                msg.content = null; return;
+            }
+            
+            piece.pos(to.row, to.col);
         }
     });
 }
