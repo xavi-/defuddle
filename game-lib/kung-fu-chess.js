@@ -184,12 +184,19 @@
     Board.onCreate = new Event();
     Board.emptyCell = { isEmpty: true, destroy: function() { } };
     
-    function Game() {
+    var Game = (function() {
         var backRow = [ "rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook" ];
+    
+        function Game() {            
+            this.board = new Board();
+            
+            this.reset();
+            
+            Game.onCreate.trigger(this);
+        }
+        Game.onCreate = new Event();
         
-        this.board = new Board();
-        
-        this.reset = function() {
+        Game.prototype.reset = function() {
             for(var r = 0; r < 8; r++) {
                 for(var c = 0; c < 8; c++) { this.board[r][c].destroy(); }
             }
@@ -202,11 +209,8 @@
             }
         };
         
-        this.reset();
-        
-        Game.onCreate.trigger(this);
-    }
-    Game.onCreate = new Event();
+        return Game;
+    })();
     
     context.Piece = Piece;
     context.Board = Board;
