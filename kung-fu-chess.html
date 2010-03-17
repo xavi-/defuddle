@@ -30,29 +30,51 @@
 
     var ch = new Channel("kung-fu-chess");
     
-    kfc.Piece.onCreate.add(function(piece) {
-        var div = document.createElement("div");
+    (function() {
+        var stunned = [];
         
-        div.className = "piece";
-        div.style.width = grid.tileWidth + "px";
-        div.style.height = grid.tileHeight + "px";
-        div.innerHTML = piece.type + "<br/>" + piece.color;
-        
-        piece.div = div;
-        piece.board.grid.root.appendChild(div);
-        
-        piece.onMove.add(function(e) {
-            var pos = grid.screenpos(e.newPos.col, e.newPos.row);
-            div.style.left = pos.x + "px";
-            div.style.top = pos.y + "px";
+        kfc.Piece.onCreate.add(function(piece) {
+            var div = document.createElement("div");
             
-            if(e.source === "user") { ch.send({ move: { from: e.oldPos, to: e.newPos } }); }
+            div.className = "piece";
+            div.style.width = grid.tileWidth + "px";
+            div.style.height = grid.tileHeight + "px";
+            div.innerHTML = piece.type + "<br/>" + piece.color;
+            
+            piece.div = div;
+            piece.board.grid.root.appendChild(div);
+            
+            piece.onMove.add(function(e) {
+                var pos = grid.screenpos(e.newPos.col, e.newPos.row);
+                div.style.left = pos.x + "px";
+                div.style.top = pos.y + "px";
+                
+                if(e.source === "user") { ch.send({ move: { from: e.oldPos, to: e.newPos } }); }
+                
+                stunned.push(piece);
+            });
+            
+            piece.onDestroy.add(function(e) {
+                div.parentNode.removeChild(div);
+            });
         });
         
-        piece.onDestroy.add(function(e) {
-            div.parentNode.removeChild(div);
-        });
-    });
+
+        var animate = setInterval(function() {
+            var now = (new Date()).getTime();
+            
+            for(var i = 0; i < stunned.length; i++) {
+                if(!stunned[i]) { stunned.splice(i, 1); i -= 1; continue; }
+            
+                var percent = Math.min(1, (now - stunned[i].lastMoved) / 5000);
+                
+                stunned[i].div.style.height = Math.round(percent * grid.tileHeight) + "px";
+                
+                if(percent === 1) { stunned.splice(i, 1); i -= 1; }
+            }
+            
+        }, 100);
+    })();
     
     kfc.Board.onCreate.add(function(board) {
         board.grid = grid;
