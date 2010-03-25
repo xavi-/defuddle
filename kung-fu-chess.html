@@ -11,7 +11,24 @@
         position: absolute;
         background-color: blue;
         text-align: center;
+        text-indent: -100em;
+        background-repeat: no-repeat;
+        background-position: center center;
     }
+    
+    .piece.black.king { background-image: url("/pics/black-king.png"); }
+    .piece.black.queen { background-image: url("/pics/black-queen.png"); }
+    .piece.black.rook { background-image: url("/pics/black-rook.png"); }
+    .piece.black.knight { background-image: url("/pics/black-knight.png"); }
+    .piece.black.bishop { background-image: url("/pics/black-bishop.png"); }
+    .piece.black.pawn { background-image: url("/pics/black-pawn.png"); }
+    
+    .piece.white.king { background-image: url("/pics/white-king.png"); }
+    .piece.white.queen { background-image: url("/pics/white-queen.png"); }
+    .piece.white.rook { background-image: url("/pics/white-rook.png"); }
+    .piece.white.knight { background-image: url("/pics/white-knight.png"); }
+    .piece.white.bishop { background-image: url("/pics/white-bishop.png"); }
+    .piece.white.pawn { background-image: url("/pics/white-pawn.png"); }
 </style>
 </head>
 <body>
@@ -36,10 +53,10 @@
         kfc.Piece.onCreate.add(function(piece) {
             var div = document.createElement("div");
             
-            div.className = "piece";
+            div.className = ["piece", piece.type, piece.color].join(" ") ;
             div.style.width = grid.tileWidth + "px";
             div.style.height = grid.tileHeight + "px";
-            div.innerHTML = piece.type + "<br/>" + piece.color;
+            div.innerHTML = piece.type + " " + piece.color;
             
             piece.div = div;
             piece.board.grid.root.appendChild(div);

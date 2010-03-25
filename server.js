@@ -68,6 +68,26 @@ srv.urls["/game-lib/block.js"] = StaticFileHandler("./game-lib/block.js", "appli
 
 srv.urls["/game-lib/kung-fu-chess.js"] = StaticFileHandler("./game-lib/kung-fu-chess.js", "application/x-javascript");
 
+(function() { // Servers pics directory.  Currently assumes all images are pngs
+    var regPic = new RegExp("/pics/([a-zA-Z0-9_-]+).png");
+    srv.patterns.push({
+        test: function(req) { return regPic.test(url.parse(req.url).pathname); },
+        handler: function(req, res) {
+            var uri = url.parse(req.url, true);
+            var picName = regPic.exec(uri.pathname)[1];
+            
+            fs.readFile("./pics/" + picName + ".png", "binary", function(err, data) {
+                if(err) { throw err; }
+                
+                res.sendHeader(200, { "Content-Length": data.length,
+                                      "Content-Type": "image/png" });
+                res.write(data, "binary");
+                res.close();
+            });
+        }
+    });
+})();
+
 // /channel/<session-id>/send?msg=<json> => returns an info-id
 // /channel/<session-id>/read?info-id=<int-id> => returns a list of json messages
 var chn = (function() {
