@@ -97,10 +97,26 @@
         };
         
         pieces["king"] = function() {
-            var pos = this.pos(), row = pos.row, col = pos.col;
+            var pos = this.pos(), row = pos.row, col = pos.col, board = this.board;
             var moves = [ { row: row + 1, col: col - 1 }, { row: row + 1, col: col }, { row: row + 1, col: col + 1 },
                           { row: row,     col: col - 1 },                             { row: row,     col: col + 1 },
                           { row: row - 1, col: col - 1 }, { row: row - 1, col: col }, { row: row - 1, col: col + 1 } ];
+            
+            if(!this.hasMoved) { // Adding moves for castling
+                var castleRow = (this.color === "white" ? 0 : 7);
+                
+                // Check king side castle
+                if(board[row][7].type === "rook" && !board[row][7].hasMoved && 
+                   board[row][5].isEmpty && board[row][6].isEmpty) {
+                    moves.push({ row: castleRow, col: 6 }); 
+                }
+                
+                // check queen side castle
+                if(board[row][0].type === "rook" && !board[row][0].hasMoved && 
+                   board[row][1].isEmpty && board[row][2].isEmpty && board[row][3].isEmpty) {
+                    moves.push({ row: castleRow, col: 2 });
+                }
+            }
             
             return moves.filter(onBoard).filter(canOccupyGen(this.board, this));
         };
@@ -124,7 +140,6 @@
                 if(arguments.length === 0) { return { row: row, col: col }; }
                 
                 if(row == arguments[0] && col == arguments[1]) { return; }
-                else { this.hasMoved = true; }
                 
                 board[row][col] = Board.emptyCell;
                 
@@ -133,8 +148,16 @@
                 row = arguments[0];
                 col = arguments[1];
                 
+                // check for castling
+                if(!this.hasMoved && this.type === "king" && (col === 2 || col === 6)) {
+                    var rook = { row: row, col: (col === 2 ? 0 : 7 ) };
+                    this.board[rook.row][rook.col].pos(row, (rook.col === 7 ? 5 : 3 ));
+                }
+                
                 board[row][col].destroy();
                 board[row][col] = this;
+                
+                this.hasMoved = true;
                 
                 this.onMove.trigger({ source: arguments[2], oldPos: oldPos, newPos: { row: row, col: col } });
                 this.lastMoved = new Date();
