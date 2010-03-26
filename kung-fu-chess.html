@@ -2,8 +2,8 @@
 <head>
 <style>
     #board {
-        width: 400px;
-        height: 400px;
+        width: 360px;
+        height: 360px;
         border: 1px solid black;
     }
     
@@ -42,7 +42,7 @@
 <script src="/game-lib/kung-fu-chess.js" type="text/javascript"></script>
 <script type="text/javascript">
 (function() {
-    var grid = hex.grid(document.getElementById("board"), { type: "rectangular" });
+    var grid = hex.grid(document.getElementById("board"), { tileWidth: 45, tileHeight: 45, type: "rectangular" });
     var region = hex.region(grid, { inside: function(x, y) { return x >= 0 && x < 8 && y >= 0 && y < 8; } });
 
     var ch = new Channel("kung-fu-chess");
