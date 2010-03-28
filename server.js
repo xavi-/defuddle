@@ -52,21 +52,18 @@ srv.urls["/"] = srv.urls["/index.html"] = StaticFileHandler("./index.html", "tex
 
 srv.urls["/client.js"] = StaticFileHandler("./client.js", "application/x-javascript");
 
-srv.urls["/pictionary.html"] = StaticFileHandler("./pictionary.html", "text/html");
+srv.urls["/pictionary.html"] = StaticFileHandler("./games/pictionary/pictionary.html", "text/html");
 
-srv.urls["/block-game.html"] = StaticFileHandler("./block-game.html", "text/html");
+srv.urls["/block-game.html"] = StaticFileHandler("./games/block/block-game.html", "text/html");
+srv.urls["/block.js"] = StaticFileHandler("./games/block/block.js", "application/x-javascript");
 
-srv.urls["/tic-tac-toe.html"] = StaticFileHandler("./tic-tac-toe.html", "text/html");
+srv.urls["/tic-tac-toe.html"] = StaticFileHandler("./games/tic-tac-toe/tic-tac-toe.html", "text/html");
+srv.urls["/tic-tac-toe.js"] = StaticFileHandler("./games/tic-tac-toe/tic-tac-toe.js", "application/x-javascript");
 
-srv.urls["/kung-fu-chess.html"] = StaticFileHandler("./kung-fu-chess.html", "text/html");
+srv.urls["/kung-fu-chess.html"] = StaticFileHandler("./games/kung-fu-chess/kung-fu-chess.html", "text/html");
+srv.urls["/kung-fu-chess.js"] = StaticFileHandler("./games/kung-fu-chess/kung-fu-chess.js", "application/x-javascript");
 
 srv.urls["/hexlib/src/hex.js"] = StaticFileHandler("./hexlib/src/hex.js", "application/x-javascript");
-
-srv.urls["/game-lib/tic-tac-toe.js"] = StaticFileHandler("./game-lib/tic-tac-toe.js", "application/x-javascript");
-
-srv.urls["/game-lib/block.js"] = StaticFileHandler("./game-lib/block.js", "application/x-javascript");
-
-srv.urls["/game-lib/kung-fu-chess.js"] = StaticFileHandler("./game-lib/kung-fu-chess.js", "application/x-javascript");
 
 (function() { // Servers pics directory.  Currently assumes all images are pngs
     var regPic = new RegExp("/pics/([a-zA-Z0-9_-]+).png");
@@ -266,7 +263,7 @@ chn.onCreate(function(id, channel) { sys.puts("New Channel called: " + id);
 });
 
 function createKungFuChessGame(channel) {
-    var kfc = require("./game-lib/kung-fu-chess");
+    var kfc = require("./games/kung-fu-chess/kung-fu-chess");
     var players, game = new kfc.Game();
     var LAG_TIME = 1000;
     
@@ -335,7 +332,7 @@ function createKungFuChessGame(channel) {
 }
 
 function createBlockGame(channel) {
-    var blk = require("./game-lib/block");
+    var blk = require("./games/block/block");
     var players, game = { a: new blk.Game(true), b: new blk.Game(true) };
     var piecesPlaced = 0;
     
@@ -380,7 +377,7 @@ function createBlockGame(channel) {
 }
 
 function createTicTacToeGame(channel) {
-    var ttt = require("./game-lib/tic-tac-toe");
+    var ttt = require("./games/tic-tac-toe/tic-tac-toe");
     var players, game = new ttt.Game();
     
     channel.onReceive(function(msg, sendMoreInfo) {
