@@ -102,7 +102,7 @@
             for(var i = 0; i < stunned.length; i++) {
                 if(!stunned[i]) { stunned.splice(i, 1); i -= 1; continue; }
                 
-                var percent = 1 - Math.max(0, (now - stunned[i].lastMoved) / 5000);
+                var percent = 1 - Math.min(1, (now - stunned[i].lastMoved) / 5000);
                 
                 stunned[i].stun.style.opacity = percent * .8 + .2;
                 stunned[i].stun.style.height = Math.round(percent * grid.tileHeight) + "px";
