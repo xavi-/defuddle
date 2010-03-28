@@ -276,7 +276,7 @@ function createKungFuChessGame(channel) {
     
     channel.onReceive(function(msg, sendMoreInfo) {
         if("clear" in msg.content) {
-            channel.data = channel.data.splice(-1);
+            channel.data = [];
             
             var users = channel.users();
             var canidates = Object.keys(users);
