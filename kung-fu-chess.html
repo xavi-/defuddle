@@ -89,7 +89,7 @@
         kfc.Piece.onCreate.add(function(piece) {
             var div = document.createElement("div");
             
-            div.className = ["piece", piece.type, piece.color].join(" ") ;
+            div.className = ["piece", piece.type, piece.color].join(" ");
             div.innerHTML = piece.type + " " + piece.color;
             
             piece.div = div;
@@ -101,6 +101,11 @@
             
             piece.stun = stun;
             grid.root.appendChild(piece.stun);
+            
+            piece.onTypeChange.add(function(e) {
+                div.className = ["piece", piece.type, piece.color].join(" ");
+                div.innerHTML = piece.type + " " + piece.color;
+            });
             
             piece.onMove.add(function(e) {
                 var pos = grid.screenpos(e.newPos.col, e.newPos.row);

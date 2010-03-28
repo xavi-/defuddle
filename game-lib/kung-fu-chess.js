@@ -2,7 +2,7 @@
     function Event(ctx) {
         var listeners = [];
         
-        this.add = function(listener) { listeners.push(listener); };
+        this.add = function(listener) { listeners.push(listener); return this; };
         
         this.trigger = function trigger(e) {
             for(var i = 0; i < listeners.length; i++) { listeners[i].call(ctx, e, ctx); }
@@ -142,7 +142,9 @@
             this.lastMoved = 0;
             
             this.isStunned = function() { return ((new Date()).getTime() - this.lastMoved) < 5000; }
-         
+            
+            this.onTypeChange = new Event(this);
+            
             this.onMove = new Event(this);
             
             this.onDestroy = new Event(this);
@@ -182,6 +184,8 @@
                 
                 this.onDestroy.trigger(e);
             };
+            
+            this.onTypeChange.add(function(e) { this.availableMoves = pieces[this.type]; });
             
             Piece.onCreate.trigger(this);
             
@@ -234,6 +238,13 @@
         Game.onCreate = new Event();
         
         (function() { //Reset
+            function checkForQueening(e) {
+                if(e.newPos.row !== 0 && e.newPos.row !== 7) { return; }
+                
+                this.type = "queen";
+                this.onTypeChange.trigger();
+            }
+            
             function checkForEnPassant(e) {
                 var row = e.newPos.row, col = e.newPos.col;
                 this.isSubjectToEnPassant = (e.firstMove && (row === 3 || row === 4));
@@ -267,8 +278,8 @@
                 
                 for(var c = 0; c < 8; c++) {
                     new Piece(backRow[c], "black", 7, c, this.board);
-                    (new Piece("pawn", "black", 6, c, this.board)).onMove.add(checkForEnPassant);
-                    (new Piece("pawn", "white", 1, c, this.board)).onMove.add(checkForEnPassant);
+                    (new Piece("pawn", "black", 6, c, this.board)).onMove.add(checkForEnPassant).add(checkForQueening);
+                    (new Piece("pawn", "white", 1, c, this.board)).onMove.add(checkForEnPassant).add(checkForQueening);
                     new Piece(backRow[c], "white", 0, c, this.board);
                 }
                 
