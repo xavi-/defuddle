@@ -157,7 +157,7 @@
             e.preventDefault();
             
             var piece = game.board[y][x];
-            if(!piece.isEmpty && (new Date()) - piece.lastMoved >= 5000) { selectedPiece = piece; }
+            if(!piece.isEmpty) { selectedPiece = piece; }
         });
         
         game.board.grid.addEvent("tileup", function(e, x, y) {
@@ -168,6 +168,8 @@
             if(x > 7 || x < 0 || y > 7 || y < 0) { return; }
             
             if(game.player !== selectedPiece.color) { return; }
+            
+            if(selectedPiece.isStunned()) { return; }
             
             if(selectedPiece.isValidMove(y, x)) { 
                 selectedPiece.pos(y, x, "user");

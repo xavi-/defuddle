@@ -20,17 +20,26 @@
         
         var pieces = {};
         pieces["pawn"] = function() {
-            var pos = this.pos(), row = pos.row, col = pos.col;
+            var pos = this.pos(), row = pos.row, col = pos.col, board = this.board;
             var dir = (this.color === "black" ? -1 : 1);
             var moves = [ { row: row + dir, col: col + 1 }, { row: row + dir, col: col - 1 } ];
             moves = moves.filter(onBoard)
-                         .filter(canOccupyGen(this.board, this))
-                         .filter(function(m) { return !m.isEmpty });
-            if(this.board[row + dir][col].isEmpty) { 
+                         .filter(canOccupyGen(board, this))
+                         .filter(function(m) { return !board[m.row][m.col].isEmpty; });
+            if(board[row + dir][col].isEmpty) { 
                 moves.push({ row: row + dir, col: col }); 
                 
-                if(!this.hasMoved && this.board[row + dir * 2][col].isEmpty) {
+                if(!this.hasMoved && board[row + dir * 2][col].isEmpty) {
                     moves.push({ row: row + dir * 2, col: col }); 
+                }
+            }
+            
+            if((row === 3 && this.color === "black") || (row === 4 && this.color === "white")) { // En Passant Moves
+                if(board[row][col + 1].isSubjectToEnPassant && board[row][col + 1].isStunned()) {
+                    moves.push({ row: row + dir, col: col + 1 }); 
+                }
+                if(board[row][col - 1].isSubjectToEnPassant && board[row][col - 1].isStunned()) {
+                    moves.push({ row: row + dir, col: col - 1 }); 
                 }
             }
             
@@ -131,6 +140,8 @@
             this.hasMoved = false;
             
             this.lastMoved = 0;
+            
+            this.isStunned = function() { return ((new Date()).getTime() - this.lastMoved) < 5000; }
          
             this.onMove = new Event(this);
             
@@ -148,18 +159,16 @@
                 row = arguments[0];
                 col = arguments[1];
                 
-                // check for castling
-                if(!this.hasMoved && this.type === "king" && (col === 2 || col === 6)) {
-                    var rook = { row: row, col: (col === 2 ? 0 : 7 ) };
-                    this.board[rook.row][rook.col].pos(row, (rook.col === 7 ? 5 : 3 ));
-                }
-                
                 board[row][col].destroy("captured");
                 board[row][col] = this;
                 
+                var fistMove = !this.hasMoved;
                 this.hasMoved = true;
                 
-                this.onMove.trigger({ source: arguments[2], oldPos: oldPos, newPos: { row: row, col: col } });
+                this.onMove.trigger({ source: arguments[2], 
+                                      firstMove: fistMove,
+                                      oldPos: oldPos, 
+                                      newPos: { row: row, col: col } });
                 this.lastMoved = new Date();
             };
             
@@ -205,7 +214,7 @@
         Board.onCreate.trigger(this);
     }
     Board.onCreate = new Event();
-    Board.emptyCell = { isEmpty: true, destroy: function() { } };
+    Board.emptyCell = { isEmpty: true, pos: function() {}, destroy: function() { } };
     
     var Game = (function() {
         var backRow = [ "rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook" ];
@@ -224,27 +233,60 @@
         }
         Game.onCreate = new Event();
         
-        Game.prototype.reset = function() {
-            for(var r = 0; r < 8; r++) {
-                for(var c = 0; c < 8; c++) { this.board[r][c].destroy("reset"); }
+        (function() { //Reset
+            function checkForEnPassant(e) {
+                var row = e.newPos.row, col = e.newPos.col;
+                this.isSubjectToEnPassant = (e.firstMove && (row === 3 || row === 4));
+                
+                if(!e.firstMove && (row === 2 || row === 5)) { // Checking for En Passant
+                    var dir = (this.color === "black" ? -1 : 1);
+                    
+                    if(this.board[row - dir][col].type !== "pawn") { return; }
+                    if(this.board[row - dir][col].color === this.color) { return; }
+                    if(!this.board[row - dir][col].isStunned()) { return; }
+                    
+                    // I just committed en passant, so destroy passer by
+                    this.board[row - dir][col].destroy("captured");
+                }
             }
             
-            for(var c = 0; c < 8; c++) {
-                new Piece(backRow[c], "black", 7, c, this.board);
-                new Piece("pawn", "black", 6, c, this.board);
-                new Piece("pawn", "white", 1, c, this.board);
-                new Piece(backRow[c], "white", 0, c, this.board);
+            function checkForCastling(e) {
+                if(!e.firstMove) { return; }
+                
+                var row = e.newPos.row, col = e.newPos.col;
+                if(col !== 2 && col !== 6) { return; }
+                
+                var rook = { row: row, col: (col === 2 ? 0 : 7 ) };
+                this.board[rook.row][rook.col].pos(row, (rook.col === 7 ? 5 : 3 ));
             }
             
-            var game = this;
-            this.board[0][4].onDestroy.add(function(e) { // White king
-                if(e === "captured") { game.onGameOver.trigger(this.color); }
-            });
-            this.board[7][4].onDestroy.add(function(e) { // Black king
-                if(e === "captured") { game.onGameOver.trigger(this.color); } 
-            });
-            this.isOver = false;
-        };
+            Game.prototype.reset = function() {
+                for(var r = 0; r < 8; r++) {
+                    for(var c = 0; c < 8; c++) { this.board[r][c].destroy("reset"); }
+                }
+                
+                for(var c = 0; c < 8; c++) {
+                    new Piece(backRow[c], "black", 7, c, this.board);
+                    (new Piece("pawn", "black", 6, c, this.board)).onMove.add(checkForEnPassant);
+                    (new Piece("pawn", "white", 1, c, this.board)).onMove.add(checkForEnPassant);
+                    new Piece(backRow[c], "white", 0, c, this.board);
+                }
+                
+                var whiteKing = this.board[0][4], blackKing = this.board[7][4];
+                
+                whiteKing.onMove.add(checkForCastling);
+                blackKing.onMove.add(checkForCastling);
+                
+                var game = this;
+                whiteKing.onDestroy.add(function(e) {
+                    if(e === "captured") { game.onGameOver.trigger(this.color); }
+                });
+                blackKing.onDestroy.add(function(e) {
+                    if(e === "captured") { game.onGameOver.trigger(this.color); } 
+                });
+                this.isOver = false;
+            };
+        })();
         
         return Game;
     })();
