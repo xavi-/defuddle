@@ -157,6 +157,8 @@
             var from = msg.content["move"].from, to = msg.content["move"].to;
             
             game.board[from.row][from.col].pos(to.row, to.col);
+        } else if("game-over" in msg.content) {
+            alert("game over");
         }
     });
     

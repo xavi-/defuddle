@@ -328,6 +328,8 @@ function createKungFuChessGame(channel) {
             }
             
             piece.pos(to.row, to.col);
+            
+            if(game.isOver) { sendMoreInfo("0", { "game-over": { "loser": game.isOver } }); }
         }
     });
 }

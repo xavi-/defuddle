@@ -154,7 +154,7 @@
                     this.board[rook.row][rook.col].pos(row, (rook.col === 7 ? 5 : 3 ));
                 }
                 
-                board[row][col].destroy();
+                board[row][col].destroy("captured");
                 board[row][col] = this;
                 
                 this.hasMoved = true;
@@ -165,13 +165,13 @@
             
             this.availableMoves = pieces[type];
             
-            this.destroy = function() {
+            this.destroy = function(e) {
                 var pos = this.pos();   
                 
                 this.board[pos.row][pos.col] = Board.emptyCell;
                 row = -1; col = -1;
                 
-                this.onDestroy.trigger();
+                this.onDestroy.trigger(e);
             };
             
             Piece.onCreate.trigger(this);
@@ -213,15 +213,20 @@
         function Game() {            
             this.board = new Board();
             
+            this.isOver = false;
+            
             this.reset();
             
+            this.onGameOver = new Event(this);
+            
+            this.onGameOver.add(function(e) { this.isOver = e; });
             Game.onCreate.trigger(this);
         }
         Game.onCreate = new Event();
         
         Game.prototype.reset = function() {
             for(var r = 0; r < 8; r++) {
-                for(var c = 0; c < 8; c++) { this.board[r][c].destroy(); }
+                for(var c = 0; c < 8; c++) { this.board[r][c].destroy("reset"); }
             }
             
             for(var c = 0; c < 8; c++) {
@@ -230,6 +235,15 @@
                 new Piece("pawn", "white", 1, c, this.board);
                 new Piece(backRow[c], "white", 0, c, this.board);
             }
+            
+            var game = this;
+            this.board[0][4].onDestroy.add(function(e) { // White king
+                if(e === "captured") { game.onGameOver.trigger(this.color); }
+            });
+            this.board[7][4].onDestroy.add(function(e) { // Black king
+                if(e === "captured") { game.onGameOver.trigger(this.color); } 
+            });
+            this.isOver = false;
         };
         
         return Game;
