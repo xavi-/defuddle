@@ -140,12 +140,14 @@
     });
     
     kfc.Game.prototype.disable = function() {
+        game.board.grid.enabled = false;
         if($(grid.root).find(".disable-cover").length > 0) { return; }
         $("<div/>").addClass("disable-cover").appendTo("#board");
     };
     
     kfc.Game.prototype.enable = function() {
-        $("#board .disable-cover").remove();
+        game.board.grid.enabled = true;
+        $("#board").find(".disable-cover, .game-over-text").remove();
     };
     
     kfc.Game.onCreate.add(function(game) {
@@ -179,7 +181,6 @@
     
     ch.onReceive(function(msg) {
         if("clear" in msg.content) {
-            $("#board .game-over-text").remove();
             game.reset();
         } else if("new-game" in msg.content) {
             game.enable();
@@ -193,7 +194,7 @@
             game.board[from.row][from.col].pos(to.row, to.col);
         } else if("game-over" in msg.content) {
             var congrats = (msg.content["game-over"].loser === game.player ? "Sorry. " : "Congrats! ");
-            var winner = (msg.content.loser === "white" ? "black" : "white");
+            var winner = (msg.content["game-over"].loser === "white" ? "black" : "white");
             game.disable();
             $("<div class='game-over-text' />")
                 .text(congrats + winner + " won")
