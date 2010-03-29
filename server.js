@@ -63,7 +63,7 @@ srv.urls["/tic-tac-toe.js"] = StaticFileHandler("./games/tic-tac-toe/tic-tac-toe
 srv.urls["/kung-fu-chess.html"] = StaticFileHandler("./games/kung-fu-chess/kung-fu-chess.html", "text/html");
 srv.urls["/kung-fu-chess.js"] = StaticFileHandler("./games/kung-fu-chess/kung-fu-chess.js", "application/x-javascript");
 
-srv.urls["/hexlib/src/hex.js"] = StaticFileHandler("./hexlib/src/hex.js", "application/x-javascript");
+srv.urls["/libraries/hex.js"] = StaticFileHandler("./libraries/hexlib/src/hex.js", "application/x-javascript");
 
 (function() { // Servers pics directory.  Currently assumes all images are pngs
     var regPic = new RegExp("/pics/([a-zA-Z0-9_-]+).png");
