@@ -1,4 +1,4 @@
 
-[submodule "libraries\\hexlib"]
-	path = libraries\\hexlib
+[submodule "libraries/hexlib"]
+	path = libraries/hexlib
 	url = git@github.com:Xavi-/hexlib.git
