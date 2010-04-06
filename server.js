@@ -48,7 +48,7 @@ var StaticFileHandler = (function() {
     };
 })();
 
-srv.urls["/"] = srv.urls["/index.html"] = StaticFileHandler("./index.html", "text/html");
+srv.urls["/"] = srv.urls["/index.html"] = StaticFileHandler("./games/pictionary/index.html", "text/html");
 
 srv.urls["/client.js"] = StaticFileHandler("./client.js", "application/x-javascript");
 
