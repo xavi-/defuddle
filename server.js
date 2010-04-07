@@ -380,7 +380,7 @@ function createBlockGame(channel) {
     
     channel.onReceive(function(msg, sendMoreInfo) {
         if("clear" in msg.content) {
-            channel.data = channel.data.splice(-1);
+            channel.data = [];
             
             var users = channel.users();
             var canidates = Object.keys(users);
@@ -412,7 +412,7 @@ function createTicTacToeGame(channel) {
     
     channel.onReceive(function(msg, sendMoreInfo) {
         if("clear" in msg.content) {        
-            channel.data = channel.data.splice(-1)
+            channel.data = [];
             
             var users = channel.users();
             var canidates = Object.keys(users);
@@ -450,7 +450,7 @@ function createTicTacToeGame(channel) {
 
 function createPictionary(channel) {
     channel.onReceive(function(msg) {
-        if("clear" in msg.content) { channel.data = channel.data.splice(-1); } 
+        if("clear" in msg.content) { channel.data = []; } 
     });
 }
 
