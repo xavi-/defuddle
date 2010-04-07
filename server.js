@@ -2,6 +2,7 @@ var sys = require("sys");
 var http = require("http");
 var url = require("url");
 var fs = require("fs");
+var bind = require("./libraries/bind-js/bind");
 
 var srv = (function() {
     var urls = {},
@@ -48,20 +49,49 @@ var StaticFileHandler = (function() {
     };
 })();
 
-srv.urls["/"] = srv.urls["/index.html"] = StaticFileHandler("./index.html", "text/html");
+var BindFileHandler = (function() {
+    function Handler(path, context, req, res) {
+        fs.readFile(path, function(err, data) {
+            if(err) { throw err; };
+            
+            bind.to(data, context, function(data) {
+                res.sendHeader(200, { "Conent-Length": data.length,
+                                      "Content-Type": "text/html" });
+                res.write(data, "utf8");
+                res.close();
+            });
+        });
+    }
+
+    return function(path, context) {
+        return function(req, res) { Handler(path, context, req, res); }; 
+    };
+})();
+
+function bindLink(val, context) {
+    val = JSON.parse(val);
+    
+    if(context.page === val.name) { return val.name; }
+    else { return ["<a href='", val.url, "'>", val.name, "</a>"].join(""); }
+}
+
+srv.urls["/"] = 
+srv.urls["/index.html"] = 
+srv.urls["/pictionary.html"] = BindFileHandler("./games/pictionary/index.html", { page: "pictionary", link: bindLink });
 
 srv.urls["/client.js"] = StaticFileHandler("./client.js", "application/x-javascript");
 
-srv.urls["/pictionary.html"] = StaticFileHandler("./games/pictionary/index.html", "text/html");
-
-srv.urls["/block-game.html"] = StaticFileHandler("./games/block/index.html", "text/html");
 srv.urls["/block.js"] = StaticFileHandler("./games/block/index.js", "application/x-javascript");
+srv.urls["/block-game.html"] = BindFileHandler("./games/block/index.html",
+                                               { page: "block game", link: bindLink });
 
-srv.urls["/tic-tac-toe.html"] = StaticFileHandler("./games/tic-tac-toe/index.html", "text/html");
 srv.urls["/tic-tac-toe.js"] = StaticFileHandler("./games/tic-tac-toe/index.js", "application/x-javascript");
+srv.urls["/tic-tac-toe.html"] = BindFileHandler("./games/tic-tac-toe/index.html", 
+                                                { page: "tic-tac-toe", link: bindLink });
 
-srv.urls["/kung-fu-chess.html"] = StaticFileHandler("./games/kung-fu-chess/index.html", "text/html");
 srv.urls["/kung-fu-chess.js"] = StaticFileHandler("./games/kung-fu-chess/index.js", "application/x-javascript");
+srv.urls["/kung-fu-chess.html"] = BindFileHandler("./games/kung-fu-chess/index.html", 
+                                                  { page: "kung-fu chess", link: bindLink });
 
 srv.urls["/libraries/hex.js"] = StaticFileHandler("./libraries/hexlib/src/hex.js", "application/x-javascript");
 
