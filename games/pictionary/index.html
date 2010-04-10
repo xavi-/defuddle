@@ -36,24 +36,26 @@ $(function() {
         var points = {};
         var timer = window.setInterval(function() {
             for(var id in points) {
-                var pnts = points[id];
+                var pnt1 = points[id][0], pnt2 = points[id][1];
                 
-                if(pnts[0] && "clear" in pnts[0]) { ctx.clear(); points[id].shift(); }
+                if(pnt1 && "clear" in pnt1) { ctx.clear(); points[id].shift(); continue; }
                 
-                if(pnts.length < 2) { continue; }
+                if(!pnt1 || !pnt2) { continue; }
+                
+                if(pnt2 && "clear" in pnt2) { ctx.clear(); points[id].shift(); points[id].shift(); continue; }
                 
                 var diff = (new Date()).getTime() - points[id].offset;
-                if(diff < pnts[1].time - pnts[0].time) { continue; }
+                if(diff < pnt2.time - pnt1.time) { continue; }
                 
                 ctx.beginPath();
-                ctx.moveTo(pnts[0].x, pnts[0].y);
-                ctx.lineTo(pnts[1].x, pnts[1].y);
+                ctx.moveTo(pnt1.x, pnt1.y);
+                ctx.lineTo(pnt2.x, pnt2.y);
                 ctx.stroke();
                 
                 points[id].shift();
                 if(points[id][0].end) { points[id].shift(); }
                 
-                if(pnts.length === 0) { delete points[id]; }
+                if(points[id].length === 0) { delete points[id]; }
                 else { points[id].offset += diff; }
             }
         }, 20);
