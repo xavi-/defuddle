@@ -80,6 +80,8 @@ srv.urls["/index.html"] =
 srv.urls["/pictionary.html"] = BindFileHandler("./games/pictionary/index.html", { page: "pictionary", link: bindLink });
 
 srv.urls["/client.js"] = StaticFileHandler("./client.js", "application/x-javascript");
+srv.urls["/json2.js"] = StaticFileHandler("./libraries/json2.js", "application/x-javascript");
+srv.urls["/excanvas.js"] = StaticFileHandler("./libraries/excanvas.js", "application/x-javascript");
 
 srv.urls["/block.js"] = StaticFileHandler("./games/block/index.js", "application/x-javascript");
 srv.urls["/block-game.html"] = BindFileHandler("./games/block/index.html",
