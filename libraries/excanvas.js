@@ -308,6 +308,7 @@ if (!document.createElement('canvas').getContext) {
     el.style.height = surfaceElement.clientHeight + 'px';
     el.style.overflow = 'hidden';
     el.style.position = 'absolute';
+    el.setAttribute("unselectable", "on");
     surfaceElement.appendChild(el);
 
     this.element_ = el;

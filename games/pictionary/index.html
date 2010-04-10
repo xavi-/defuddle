@@ -13,14 +13,14 @@
             user-select: none;
             cursor: pointer;
         }
-        iframe { border: none; height: 502px; }
+        iframe { height: 502px; margin-left: 2px; }
     </style>
     <!--[if IE]><script type="text/javascript" src="/excanvas.js"></script><![endif]-->
 </head>
 <body>
     <h1>Pictionary</h1>
-    <canvas id="paper" width="500" height="500"></canvas>
-    <iframe src="http://www.the-xavi.com/chat/pictionary">
+    <canvas id="paper" width="500" height="500" unselectable="on">
+    </canvas><iframe src="http://www.the-xavi.com/chat/pictionary" frameborder="0">
         You can't join the chat =(
     </iframe>
     <br/>
