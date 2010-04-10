@@ -30,7 +30,7 @@ $(function() {
     
     ctx.clear = function() { this.clearRect(0, 0, 500, 500); };
     
-    $("#clear").click(function() { ctx.clear(); ch.clear(); return false; });
+    $("#clear").click(function() { ctx.clear(); ch.clear(); drawPoints.clear(); return false; });
     
     var drawPoints = (function() {
         var points = {};
@@ -40,9 +40,9 @@ $(function() {
                 
                 if(pnt1 && "clear" in pnt1) { ctx.clear(); points[id].shift(); continue; }
                 
-                if(!pnt1 || !pnt2) { continue; }
-                
                 if(pnt2 && "clear" in pnt2) { ctx.clear(); points[id].shift(); points[id].shift(); continue; }
+                
+                if(!pnt1 || !pnt2) { continue; }
                 
                 var diff = (new Date()).getTime() - points[id].offset;
                 if(diff < pnt2.time - pnt1.time) { continue; }
@@ -60,7 +60,7 @@ $(function() {
             }
         }, 20);
         
-        return function drawPoints(data) {
+        function drawPoints(data) {
             if(!data || !data.content) { return; }
             
             var id = data.userId, content = data.content;
@@ -78,6 +78,10 @@ $(function() {
             
             if(!points[id].offset) { points[id].offset = (new Date()).getTime(); }
         };
+        
+        drawPoints.clear = function() { points = {}; };
+        
+        return drawPoints;
     })();
     ch.onReceive(drawPoints);
     
