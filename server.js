@@ -11,8 +11,7 @@ var srv = (function() {
             var body = "404'd";
             res.sendHeader(404, { "Content-Length": body.length,
                                   "Content-Type": "text/plain" });
-            res.write(body);
-            res.close();
+            res.end(body);
             
             sys.puts("Someone 404'd: " + req.url);
         };
@@ -39,8 +38,7 @@ var StaticFileHandler = (function() {
             
             res.sendHeader(200, { "Conent-Length": data.length,
                                   "Content-Type": mime });
-            res.write(data, "utf8");
-            res.close();
+            res.end(data, "utf8");
         });
     }
 
@@ -57,8 +55,7 @@ var BindFileHandler = (function() {
             bind.to(data, context, function(data) {
                 res.sendHeader(200, { "Conent-Length": data.length,
                                       "Content-Type": "text/html" });
-                res.write(data, "utf8");
-                res.close();
+                res.end(data, "utf8");
             });
         });
     }
@@ -79,10 +76,6 @@ srv.urls["/"] =
 srv.urls["/index.html"] = 
 srv.urls["/pictionary.html"] = BindFileHandler("./games/pictionary/index.html", { page: "pictionary", link: bindLink });
 
-srv.urls["/client.js"] = StaticFileHandler("./client.js", "application/x-javascript");
-srv.urls["/json2.js"] = StaticFileHandler("./libraries/json2.js", "application/x-javascript");
-srv.urls["/excanvas.js"] = StaticFileHandler("./libraries/excanvas.js", "application/x-javascript");
-
 srv.urls["/block.js"] = StaticFileHandler("./games/block/index.js", "application/x-javascript");
 srv.urls["/block-game.html"] = BindFileHandler("./games/block/index.html",
                                                { page: "block game", link: bindLink });
@@ -95,6 +88,9 @@ srv.urls["/kung-fu-chess.js"] = StaticFileHandler("./games/kung-fu-chess/index.j
 srv.urls["/kung-fu-chess.html"] = BindFileHandler("./games/kung-fu-chess/index.html", 
                                                   { page: "kung-fu chess", link: bindLink });
 
+srv.urls["/client.js"] = StaticFileHandler("./client.js", "application/x-javascript");
+srv.urls["/json2.js"] = StaticFileHandler("./libraries/json2.js", "application/x-javascript");
+srv.urls["/excanvas.js"] = StaticFileHandler("./libraries/excanvas.js", "application/x-javascript");
 srv.urls["/libraries/hex.js"] = StaticFileHandler("./libraries/hexlib/src/hex.js", "application/x-javascript");
 
 (function() { // Servers pics directory.  Currently assumes all images are pngs
@@ -110,8 +106,7 @@ srv.urls["/libraries/hex.js"] = StaticFileHandler("./libraries/hexlib/src/hex.js
                 
                 res.sendHeader(200, { "Content-Length": data.length,
                                       "Content-Type": "image/png" });
-                res.write(data, "binary");
-                res.close();
+                res.end(data, "binary");
             });
         }
     });
@@ -134,8 +129,7 @@ var chn = (function() {
                                   "Content-Type": "application/json",
                                   "Cache-Control": "no-cache",
                                   "Set-Cookie": userId  + "; path=/;"});
-            res.write(body);
-            res.close();
+            res.end(body);
         }
         
         return function Channel(id) {
@@ -259,8 +253,7 @@ var chn = (function() {
                                       "Content-Type": "text/plain",
                                       "Cache-Control": "no-cache",
                                       "Set-Cookie": userId + "; path=/;"});
-                res.write(infoId);
-                res.close();
+                res.end(infoId);
             }
         });
     })();
