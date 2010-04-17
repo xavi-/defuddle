@@ -1,51 +1,9 @@
 var sys = require("sys");
-var http = require("http");
 var url = require("url");
 var fs = require("fs");
 var bind = require("./libraries/bind-js/bind");
 
-var srv = (function() {
-    var urls = {},
-        patterns = [],
-        error = function(req, res) { 
-            var body = "404'd";
-            res.sendHeader(404, { "Content-Length": body.length,
-                                  "Content-Type": "text/plain" });
-            res.end(body);
-            
-            sys.puts("Someone 404'd: " + req.url);
-        };
-
-    function findPattern(req) {
-        for(var i = 0, l = patterns.length; i < l; i++) {
-            if(patterns[i].test(req)) { return patterns[i].handler; }
-        }
-        
-        return null;
-    }    
-        
-    http.createServer(function(req, res) {
-        (urls[url.parse(req.url).pathname] || findPattern(req) || error)(req, res);
-    }).listen(8000);
-    
-    return { urls: urls, patterns: patterns, error: error };
-})();
-
-var StaticFileHandler = (function() {
-    function Handler(path, mime, req, res) {
-        fs.readFile(path, function(err, data) {
-            if(err) { throw err; };
-            
-            res.sendHeader(200, { "Conent-Length": data.length,
-                                  "Content-Type": mime });
-            res.end(data, "utf8");
-        });
-    }
-
-    return function(path, mime) {
-        return function(req, res) { Handler(path, mime, req, res); }; 
-    };
-})();
+var srv = require("./libraries/xavlib/simple-router");
 
 var BindFileHandler = (function() {
     function Handler(path, context, req, res) {
@@ -76,22 +34,22 @@ srv.urls["/"] =
 srv.urls["/index.html"] = 
 srv.urls["/pictionary.html"] = BindFileHandler("./games/pictionary/index.html", { page: "pictionary", link: bindLink });
 
-srv.urls["/block.js"] = StaticFileHandler("./games/block/index.js", "application/x-javascript");
+srv.urls["/block.js"] = srv.staticFileHandler("./games/block/index.js", "application/x-javascript");
 srv.urls["/block-game.html"] = BindFileHandler("./games/block/index.html",
                                                { page: "block game", link: bindLink });
 
-srv.urls["/tic-tac-toe.js"] = StaticFileHandler("./games/tic-tac-toe/index.js", "application/x-javascript");
+srv.urls["/tic-tac-toe.js"] = srv.staticFileHandler("./games/tic-tac-toe/index.js", "application/x-javascript");
 srv.urls["/tic-tac-toe.html"] = BindFileHandler("./games/tic-tac-toe/index.html", 
                                                 { page: "tic-tac-toe", link: bindLink });
 
-srv.urls["/kung-fu-chess.js"] = StaticFileHandler("./games/kung-fu-chess/index.js", "application/x-javascript");
+srv.urls["/kung-fu-chess.js"] = srv.staticFileHandler("./games/kung-fu-chess/index.js", "application/x-javascript");
 srv.urls["/kung-fu-chess.html"] = BindFileHandler("./games/kung-fu-chess/index.html", 
                                                   { page: "kung-fu chess", link: bindLink });
 
-srv.urls["/client.js"] = StaticFileHandler("./client.js", "application/x-javascript");
-srv.urls["/json2.js"] = StaticFileHandler("./libraries/json2.js", "application/x-javascript");
-srv.urls["/excanvas.js"] = StaticFileHandler("./libraries/excanvas.js", "application/x-javascript");
-srv.urls["/libraries/hex.js"] = StaticFileHandler("./libraries/hexlib/src/hex.js", "application/x-javascript");
+srv.urls["/client.js"] = srv.staticFileHandler("./libraries/xavlib/channel/client.js", "application/x-javascript");
+srv.urls["/json2.js"] = srv.staticFileHandler("./libraries/json2.js", "application/x-javascript");
+srv.urls["/excanvas.js"] = srv.staticFileHandler("./libraries/excanvas.js", "application/x-javascript");
+srv.urls["/libraries/hex.js"] = srv.staticFileHandler("./libraries/hexlib/src/hex.js", "application/x-javascript");
 
 (function() { // Servers pics directory.  Currently assumes all images are pngs
     var regPic = new RegExp("/pics/([a-zA-Z0-9_-]+).png");
@@ -114,171 +72,7 @@ srv.urls["/libraries/hex.js"] = StaticFileHandler("./libraries/hexlib/src/hex.js
 
 // /channel/<session-id>/send?msg=<json> => returns an info-id
 // /channel/<session-id>/read?info-id=<int-id> => returns a list of json messages
-var chn = (function() {
-    var _onCreate = [];
-
-    var Channel = (function() {
-        var nextInfoId = (function() {
-            var infoId = 1;
-            return function nextInfoId() { return infoId++; };
-        })();
-        
-        function sendJSON(userId, content, res) {
-            var body = JSON.stringify(content);                    
-            res.sendHeader(200, { "Content-Length": body.length,
-                                  "Content-Type": "application/json",
-                                  "Cache-Control": "no-cache",
-                                  "Set-Cookie": userId  + "; path=/;"});
-            res.end(body);
-        }
-        
-        return function Channel(id) {
-            var users = {}, responses = [], _onReceive = [];
-            
-            this.id = id;
-            
-            this.data = [];
-            
-            this.users = function() { return users; };
-            
-            this.onReceive = function onReceive(callback) { _onReceive.push(callback); };
-            
-            this.info = function info(userId, type, res) {
-                var content = { type: type };
-                
-                if(type === "users") { content.message = users; }
-                else if(type === "remove-me") {
-                    content.message = (users[userId] ? "OK" : "NA");
-                    responses = responses.filter(function(o) { return o.userId !== userId; });
-                    users[userId] = 0;
-                }
-                else { content.message = "Unknown Type"; }
-                
-                sendJSON(userId, content, res);
-            };
-            
-            this.send = function send(userId, content) {                
-                var info = [], lastInfoId;
-                function sendMore(userId, content) {
-                    lastInfoId = nextInfoId();
-                    info.push({ infoId: lastInfoId, message: { userId: userId, content: content } });
-                    return lastInfoId;
-                }
-                
-                sendMore(userId, content);
-                
-                for(var i = 0; i < _onReceive.length; i++) { _onReceive[i].call(this, info[0].message, sendMore); }
-                if(!info[0].message.content) { return -1; }
-                
-                Array.prototype.push.apply(this.data, info);
-                
-                responses.filter(function(o) { return o.userId !== userId; })
-                         .forEach(function(o) { sendJSON(o.userId, info, o.response); });
-                responses = responses.filter(function(o) { return o.userId === userId; });
-                
-                var newInfo = info.filter(function(o) { return o.message.userId !== userId; });
-                if(newInfo.length > 0) {
-                    responses.forEach(function(o) { sendJSON(o.userId, newInfo, o.response); });
-                    responses = [];
-                }
-                    
-                return lastInfoId;
-            };
-            
-            this.read = function read(userId, infoId, res) {
-                var content = this.data.filter(function(item) { return item.infoId > infoId; });
-                
-                if(content.length === 0) {
-                    responses = responses.filter(function(o) { return o.userId !== userId; });
-                    responses.push({ userId: userId, response: res, time: (new Date()).getTime() });
-                } else { sendJSON(userId, content, res); }
-            };
-            
-            setInterval(function() {
-                var curTime = (new Date()).getTime();
-                responses // Removing old responses
-                    .filter(function(o) { return curTime - o.time > 45000; })
-                    .forEach(function(o) { sendJSON(o.userId, [], o.response);  o.response = null; });
-                responses = responses.filter(function(o) { return o.response != null });
-                
-                for(var userId in users) { users[userId] -= 1; }
-                responses.forEach(function(o) { users[o.userId] = 2; });
-                for(var userId in users) if(users[userId] <= 0) { delete users[userId]; }
-            }, 5000);
-            
-            for(var i = 0; i < _onCreate.length; i++) { _onCreate[i].call(this, id, this); }
-        };
-    })();
-    
-    var channels = {};
-    
-    var nextUserId = (function() {
-        var userId = (new Date()).getTime();
-        return function nextUserId() { return (userId++).toString(); };
-    })();
-    
-    (function() { // Info
-        var regSend = new RegExp("/channel/([a-zA-Z0-9_-]+)/info");
-        srv.patterns.push({
-            test: function(req) { return regSend.test(url.parse(req.url).pathname); },
-            handler: function(req, res) {
-                var uri = url.parse(req.url, true);
-                var channelId = regSend.exec(uri.pathname)[1];
-                
-                channels[channelId] = channels[channelId] || (new Channel(channelId));
-                
-                var userId = req.headers["cookie"] || nextUserId();
-                var type = uri.query["type"];
-                channels[channelId].info(userId, type, res);
-            }
-        });
-    })();
-    
-    (function() { // Send
-        var regSend = new RegExp("/channel/([a-zA-Z0-9_-]+)/send");
-        srv.patterns.push({
-            test: function(req) { return regSend.test(url.parse(req.url).pathname); },
-            handler: function(req, res) {
-                var uri = url.parse(req.url, true);
-                var channelId = regSend.exec(uri.pathname)[1];
-                
-                channels[channelId] = channels[channelId] || (new Channel(channelId));
-                
-                var userId = req.headers["cookie"] || nextUserId();
-                var content = JSON.parse(uri.query["msg"]);
-                var infoId = channels[channelId].send(userId, content).toString();
-                
-                // reply new info to listeners
-                res.sendHeader(200, { "Content-Length": infoId.length,
-                                      "Content-Type": "text/plain",
-                                      "Cache-Control": "no-cache",
-                                      "Set-Cookie": userId + "; path=/;"});
-                res.end(infoId);
-            }
-        });
-    })();
-    
-    (function() { // Read
-        var regRead = new RegExp("/channel/([a-zA-Z0-9_-]+)/read");
-        srv.patterns.push({
-            test: function(req) { return regRead.test(url.parse(req.url).pathname); },
-            handler: function(req, res) { 
-                var uri = url.parse(req.url, true);
-                var channelId = regRead.exec(uri.pathname)[1];
-                
-                channels[channelId] = channels[channelId] || (new Channel(channelId));
-                
-                var userId = req.headers["cookie"] || nextUserId();
-                var infoId = parseInt(uri.query["info-id"], 10) || 0;
-                channels[channelId].read(userId, infoId, res);
-                
-                sys.puts(req.headers["cookie"]);
-            }
-        });
-    })();
-    
-    return { channels: channels, onCreate: function(callback) { _onCreate.push(callback); } };
-})();
+var chn = require("./libraries/xavlib/channel");
 
 chn.onCreate(function(id, channel) { sys.puts("New Channel called: " + id);
     if(id === "pictionary") { createPictionary(channel); }
@@ -449,4 +243,5 @@ function createPictionary(channel) {
     });
 }
 
+chn.start(srv);
 sys.puts("It's time to fud");
