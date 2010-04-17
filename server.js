@@ -243,5 +243,6 @@ function createPictionary(channel) {
     });
 }
 
+srv.server.listen(8000);
 chn.start(srv);
 sys.puts("It's time to fud");
