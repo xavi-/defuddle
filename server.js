@@ -1,7 +1,7 @@
 var sys = require("sys");
 var url = require("url");
 var fs = require("fs");
-var bind = require("./libraries/bind-js/bind");
+var bind = require("./libraries/bind-js");
 
 var srv = require("./libraries/xavlib/simple-router");
 
