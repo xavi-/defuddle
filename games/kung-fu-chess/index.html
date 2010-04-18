@@ -196,7 +196,7 @@
             game.enable();
             game.player = msg.content["new-game"][ch.userId()];
             
-            if(game.player) { $("#player-status").text("You're are " + game.player); }
+            if(game.player) { $("#player-status").text("You're " + game.player); }
             else { $("#player-status").text("Sorry you're not playing..."); }
         } else if("move" in msg.content) {
             var from = msg.content["move"].from, to = msg.content["move"].to;
