@@ -58,12 +58,12 @@
 <script src="/tic-tac-toe.js" type="text/javascript"></script>
 <script>
 (function() {
-    ttt.Cell.onCreate.add(function(cell) {
+    ttt.Cell.onCreate(function(cell) {
         var div = document.createElement("div");
         
         cell.div = div;
         
-        cell.onChange.add(function(e) { div.innerHTML = e.symbol || ""; });
+        cell.onChange(function(e) { div.innerHTML = e.symbol || ""; });
         
         div.className = "cell";
         div.style.top = (cell.row * 50) + "px";
@@ -71,7 +71,7 @@
         cell.board.div.appendChild(div);
     });
     
-    ttt.Board.onCreate.add(function(board) {
+    ttt.Board.onCreate(function(board) {
         board.div = document.createElement("div");
         board.div.className = "board";
     });
@@ -86,7 +86,7 @@
         $(this.board.div).find(".disable-cover").remove();
     };
     
-    ttt.Game.onCreate.add(function(game) {
+    ttt.Game.onCreate(function(game) {
         var board = game.board;
         
         for(var r = 0; r < 3; r++) {
@@ -99,18 +99,18 @@
                 })(board, r, c, game));
             }
         }
-        game.onPlacement.add(function(e) {
+        game.onPlacement(function(e) {
             if(this.player === this.whosNext) { this.enable(); } else { this.disable(); }
         });
     });
     
     var ch = new Channel("tic-tac-toe");
     var game = new ttt.Game();
-    game.onReset.add(function() { 
+    game.onReset(function() { 
         $(".winner").remove();
         $("#turn-status").text("It's " + this.whosTurn + " turn."); 
     });
-    game.onPlacement.add(function(e) {
+    game.onPlacement(function(e) {
         if(e.source === "user") { ch.send({ turn: this.whosTurn, row: e.cell.row, col: e.cell.col }); }
                 
         $("#turn-status").text("It's " + this.whosNext + " turn.");

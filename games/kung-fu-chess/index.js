@@ -1,13 +1,19 @@
 (function(context) {
-    function Event(ctx) {
-        var listeners = [];
+    var event = (function() {
+        function create(ctx) {
+            var listeners = [], addObj = { add: add };
+            
+            function add(listener) { listeners.push(listener); return addObj; };
+            
+            add.trigger = function trigger(e) {
+                for(var i = 0; i < listeners.length; i++) { listeners[i].apply(ctx, arguments); }
+            };
+            
+            return add;
+        }
         
-        this.add = function(listener) { listeners.push(listener); return this; };
-        
-        this.trigger = function trigger(e) {
-            for(var i = 0; i < listeners.length; i++) { listeners[i].call(ctx, e, ctx); }
-        };
-    }
+        return { create: create };
+    })();
     
     var Piece = (function() {
         function onBoard(pos) {
@@ -143,11 +149,11 @@
             
             this.isStunned = function() { return ((new Date()).getTime() - this.lastMoved) < 5000; }
             
-            this.onTypeChange = new Event(this);
+            this.onTypeChange = event.create(this);
             
-            this.onMove = new Event(this);
+            this.onMove = event.create(this);
             
-            this.onDestroy = new Event(this);
+            this.onDestroy = event.create(this);
             
             this.pos = function() {
                 if(arguments.length === 0) { return { row: row, col: col }; }
@@ -185,14 +191,14 @@
                 this.onDestroy.trigger(e);
             };
             
-            this.onTypeChange.add(function(e) { this.availableMoves = pieces[this.type]; });
+            this.onTypeChange(function(e) { this.availableMoves = pieces[this.type]; });
             
             Piece.onCreate.trigger(this);
             
             board[row][col] = this;
             this.onMove.trigger({ source: "creation", newPos: { row: row, col: col } });
         }
-        Piece.onCreate = new Event();
+        Piece.onCreate = event.create();
         
         Piece.prototype.isEmpty = false;
         
@@ -217,7 +223,7 @@
         
         Board.onCreate.trigger(this);
     }
-    Board.onCreate = new Event();
+    Board.onCreate = event.create();
     Board.emptyCell = { isEmpty: true, pos: function() {}, destroy: function() { } };
     
     var Game = (function() {
@@ -230,12 +236,12 @@
             
             this.reset();
             
-            this.onGameOver = new Event(this);
+            this.onGameOver = event.create(this);
             
-            this.onGameOver.add(function(e) { this.isOver = e; });
+            this.onGameOver(function(e) { this.isOver = e; });
             Game.onCreate.trigger(this);
         }
-        Game.onCreate = new Event();
+        Game.onCreate = event.create();
         
         (function() { //Reset
             function checkForQueening(e) {
@@ -278,21 +284,21 @@
                 
                 for(var c = 0; c < 8; c++) {
                     new Piece(backRow[c], "black", 7, c, this.board);
-                    (new Piece("pawn", "black", 6, c, this.board)).onMove.add(checkForEnPassant).add(checkForQueening);
-                    (new Piece("pawn", "white", 1, c, this.board)).onMove.add(checkForEnPassant).add(checkForQueening);
+                    (new Piece("pawn", "black", 6, c, this.board)).onMove(checkForEnPassant).add(checkForQueening);
+                    (new Piece("pawn", "white", 1, c, this.board)).onMove(checkForEnPassant).add(checkForQueening);
                     new Piece(backRow[c], "white", 0, c, this.board);
                 }
                 
                 var whiteKing = this.board[0][4], blackKing = this.board[7][4];
                 
-                whiteKing.onMove.add(checkForCastling);
-                blackKing.onMove.add(checkForCastling);
+                whiteKing.onMove(checkForCastling);
+                blackKing.onMove(checkForCastling);
                 
                 var game = this;
-                whiteKing.onDestroy.add(function(e) {
+                whiteKing.onDestroy(function(e) {
                     if(e === "captured") { game.onGameOver.trigger(this.color); }
                 });
-                blackKing.onDestroy.add(function(e) {
+                blackKing.onDestroy(function(e) {
                     if(e === "captured") { game.onGameOver.trigger(this.color); } 
                 });
                 this.isOver = false;

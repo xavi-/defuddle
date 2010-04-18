@@ -89,7 +89,7 @@
     (function() { // Piece logic
         var stunned = [];
         
-        kfc.Piece.onCreate.add(function(piece) {
+        kfc.Piece.onCreate(function(piece) {
             var div = document.createElement("div");
             
             div.className = ["piece", piece.type, piece.color].join(" ");
@@ -105,12 +105,12 @@
             piece.stun = stun;
             grid.root.appendChild(piece.stun);
             
-            piece.onTypeChange.add(function(e) {
+            piece.onTypeChange(function(e) {
                 div.className = ["piece", piece.type, piece.color].join(" ");
                 div.innerHTML = piece.type + " " + piece.color;
             });
             
-            piece.onMove.add(function(e) {
+            piece.onMove(function(e) {
                 var pos = grid.screenpos(e.newPos.col, e.newPos.row);
                 
                 stun.style.left = div.style.left = pos.x + "px";
@@ -121,7 +121,7 @@
                 stunned.push(piece);
             });
             
-            piece.onDestroy.add(function(e) {
+            piece.onDestroy(function(e) {
                 div.parentNode.removeChild(div);
                 stun.parentNode.removeChild(stun);
             });
@@ -143,7 +143,7 @@
         }, 100);
     })();
     
-    kfc.Board.onCreate.add(function(board) {
+    kfc.Board.onCreate(function(board) {
         board.grid = grid;
     });
     
@@ -158,7 +158,7 @@
         $("#board").find(".disable-cover, .game-over-text").remove();
     };
     
-    kfc.Game.onCreate.add(function(game) {
+    kfc.Game.onCreate(function(game) {
         var selectedPiece;
         
         game.board.grid.addEvent("tiledown", function(e, x, y) {

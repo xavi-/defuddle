@@ -1,13 +1,19 @@
 (function(context) {
-    function Event(ctx) {
-        var listeners = [];
+    var event = (function() {
+        function create(ctx) {
+            var listeners = [], addObj = { add: add };
+            
+            function add(listener) { listeners.push(listener); return addObj; };
+            
+            add.trigger = function trigger(e) {
+                for(var i = 0; i < listeners.length; i++) { listeners[i].apply(ctx, arguments); }
+            };
+            
+            return add;
+        }
         
-        this.add = function(listener) { listeners.push(listener); };
-        
-        this.trigger = function trigger(e) {
-            for(var i = 0; i < listeners.length; i++) { listeners[i].call(ctx, e, ctx); }
-        };
-    }
+        return { create: create };
+    })();
 
     function Cell(board, row, col) {
         var symbol = null;
@@ -27,11 +33,11 @@
             this.onChange.trigger({ symbol: symbol, source: arguments[1] });
         };
         
-        this.onChange = new Event(this);
+        this.onChange = event.create(this);
         
         Cell.onCreate.trigger(this);
     }
-    Cell.onCreate = new Event();
+    Cell.onCreate = event.create();
     
     function Board() {
         Board.onCreate.trigger(this);
@@ -42,7 +48,7 @@
             for(var c = 0; c < 3; c++) { this[r][c] = new Cell(this, r, c); }
         }
     }
-    Board.onCreate = new Event();
+    Board.onCreate = event.create();
     
     var Game = (function() {    
         function updateTurns(e) {
@@ -57,15 +63,15 @@
             
             this.whosNext = "X";
                         
-            this.onReset = new Event(this);
+            this.onReset = event.create(this);
                         
-            this.onPlacement = new Event(this);
+            this.onPlacement = event.create(this);
             
             Game.onCreate.trigger(this);
             
             for(var r = 0; r < 3; r++) {
                 for(var c = 0; c < 3; c++) {
-                    this.board[r][c].onChange.add((function(game) { 
+                    this.board[r][c].onChange((function(game) { 
                         return function(e) {
                             if(e.source === "reset") { return; }
                             game.onPlacement.trigger({cell: this, source: e.source });
@@ -75,7 +81,7 @@
                 }
             }   
         }
-        Game.onCreate = new Event();
+        Game.onCreate = event.create();
         
         Game.prototype.reset = function() {
             this.whosTurn = "";

@@ -22,24 +22,24 @@
 <script src="/block.js" type="text/javascript"></script>
 <script>
 (function() {
-    blk.Block.onCreate.add(function(block) {
+    blk.Block.onCreate(function(block) {
         var div = document.createElement("div");
         
         block.div = div;
         
-        block.onColorChange.add(function(color) {
+        block.onColorChange(function(color) {
             var pos = this.pos();
             div.className = "block " + color;
             div.style.top = pos.row * 20;
             div.style.left = pos.col * 20;
         });
         
-        block.onMove.add(function(e) {
+        block.onMove(function(e) {
             div.style.top = e.row * 20;
             div.style.left = e.col * 20;
         });
         
-        block.onDestroy.add(function() {
+        block.onDestroy(function() {
             this.board.div.removeChild(div);
             div = null;
         });
@@ -51,7 +51,7 @@
         block.board.div.appendChild(div);
     });
     
-    blk.Board.onCreate.add(function(board) {
+    blk.Board.onCreate(function(board) {
         board.div = document.createElement("div");
         
         $(board.div)
@@ -101,7 +101,7 @@
         //if(msg.userId !== ch.userId()) { gameB.piece[msg.content.move]("server"); }
     });
     
-    game.onFreeze.add(function() {
+    game.onFreeze(function() {
         if(game.isGameOver()) { return; }
         
         game.piece.create(game.piece.queue.shift(), "user");
@@ -115,15 +115,15 @@
         game.piece.onPlacement.once(function() { clearInterval(loop); });*/
     });
     
-    game.piece.onCreate.add(function(e) {
+    game.piece.onCreate(function(e) {
         if(e.source === "user") { ch.send({ "new-piece": e.blocks }); }
     });
-    //game.piece.onMove.add(function(e) { if(e.source === "user") {console.log("send: " + e.dir); ch.send({ move: e.dir }); } });
-    game.piece.onPlacement.add(function(e) {
+    //game.piece.onMove(function(e) { if(e.source === "user") {console.log("send: " + e.dir); ch.send({ move: e.dir }); } });
+    game.piece.onPlacement(function(e) {
         ch.send({ "piece-placed": { row: e.row, col: e.col } });
     });
     
-    gameB.onFreeze.add(function() {
+    gameB.onFreeze(function() {
         if(gameB.isGameOver()) { return; }
         
         gameB.piece.create(gameB.piece.queue.shift(), "server");

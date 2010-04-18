@@ -1,20 +1,26 @@
 (function(context) {
-    function Event(ctx) {
-        var listeners = [];
+    var event = (function() {
+        function create(ctx) {
+            var listeners = [], addObj = { add: add };
+            
+            function add(listener) { listeners.push(listener); return addObj; };
+            
+            add.trigger = function trigger(e) {
+                for(var i = 0; i < listeners.length; i++) { listeners[i].apply(ctx, arguments); }
+            };
+            
+            return add;
+        }
         
-        this.add = function(listener) { listeners.push(listener); };
-        
-        this.trigger = function trigger(e) {
-            for(var i = 0; i < listeners.length; i++) { listeners[i].call(ctx, e, ctx); }
-        };
-    }
+        return { create: create };
+    })();
     
     function Block(board, row, col, color) {
         color = color || "";
         
         this.board = board;
         
-        this.onColorChange = new Event(this);
+        this.onColorChange = event.create(this);
         this.color = function() { 
             if(!arguments.length) { return color; }
             
@@ -25,7 +31,7 @@
         
         this.isEmpty = false;
         
-        this.onMove = new Event(this);
+        this.onMove = event.create(this);
         this.pos = function() {
             if(!arguments.length) { return { row: row, col: col }; }
             
@@ -40,7 +46,7 @@
             this.onMove.trigger({ row: row, col: col });
         };
         
-        this.onDestroy = new Event(this);
+        this.onDestroy = event.create(this);
         this.destroy = function() {
             if(row == null || col == null) { return; }
             
@@ -57,7 +63,7 @@
         
         board[row][col] = this;
     }
-    Block.onCreate = new Event();
+    Block.onCreate = event.create();
 
     function EmptyBlock(board, row, col) {    
         this.color = function() {
@@ -91,7 +97,7 @@
             }
         }
     }
-    Board.onCreate = new Event();
+    Board.onCreate = event.create();
     
     var Piece = (function() {
         var colors = ["green", "blue", "red"];
@@ -104,11 +110,11 @@
             
             this.isFalling = false;
             
-            this.onCreate = new Event(this);
+            this.onCreate = event.create(this);
             
-            this.onMove = new Event(this);
+            this.onMove = event.create(this);
             
-            this.onPlacement = new Event(this);
+            this.onPlacement = event.create(this);
         }
         
         Piece.prototype.create = function(blocks, source) {
@@ -293,7 +299,7 @@
             
             this.isFrozen = true;
             
-            this.onFreeze = new Event(this);
+            this.onFreeze = event.create(this);
             
             this.runPhysics = (useInstantPhysics ? instantPhysics : timedPhysics);
             
