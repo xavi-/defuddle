@@ -11,15 +11,31 @@
             -webkit-user-select: none;
             user-select: none;
             cursor: pointer;
+            width: 500px;
+            height: 500px;
+            position: relative;
+            float: left;
         }
-        iframe { height: 502px; margin-left: 2px; }
+        
+        #paper canvas {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+        }
+        
+        iframe { float: left; height: 502px; margin-left: 2px; }
+        
+        #brush{ clear: both; }
     </style>
     <!--[if IE]><script type="text/javascript" src="/excanvas.js"></script><![endif]-->
 </head>
 <body>
     <h1>Pictionary</h1>
-    <canvas id="paper" width="500" height="500" unselectable="on">
-    </canvas><iframe src="http://www.the-xavi.com/chat/pictionary" frameborder="0">
+    <div id="paper">
+        <canvas id="base" width="500" height="500" unselectable="on"></canvas>
+        <canvas id="user-layer" width="500" height="500" unselectable="on"></canvas>
+    </div>
+    <iframe src="http://www.the-xavi.com/chat/pictionary" frameborder="0">
         You can't join the chat =(
     </iframe>
     <br/>
@@ -36,13 +52,11 @@
 <script src="/client.js" type="text/javascript"></script>
 <script>
 $(function() { 
-    var paper = document.getElementById("paper");
-    var ctx = paper.getContext("2d");
+    var baseCtx = document.getElementById("base").getContext("2d");
     var ch = new Channel("pictionary");
     
-    ctx.clear = function() { this.clearRect(0, 0, 500, 500); };
     $("#clear").click(function() { ctx.clear(); ch.clear(); drawPoints.clear(); return false; });
-    ctx.lineCap = "round";
+    
     var drawPoints = (function() {
         var points = {};
         var timer = window.setInterval(function() {
@@ -95,13 +109,13 @@ $(function() {
         
         drawPoints.clear = function() { points = {}; };
         
-        return drawPoints;
+        return function() { }; //drawPoints;
     })();
     ch.onReceive(drawPoints);
     
     var sendPoint = (function() {
         var points = [], lastTime = 0;
-        return function sendPoint(x, y, brushNum, forced) {
+        function sendPoint(x, y, brushNum, forced) {
             var curTime = (new Date()).getTime();
             
             points.push({ x: +x >> 0, y: +y >> 0, "brush": brushNum,
@@ -115,8 +129,84 @@ $(function() {
             ch.send(points);
             points.length = 0;
         };
+        
+        return function() { };
     })();
     
+    var DrawLayer = (function() {        
+        function parseBrush(number) {
+            number = +number;
+            
+            var brush = { red: (number & 0x00FF0000) >> 16,
+                          green: (number & 0x0000FF00) >> 8,
+                          blue: (number & 0x000000FF) >> 0,
+                          alpha: ((number & 0x0F000000) >> 24) / 0x0F,
+                          width: ((number & 0xF0000000) >>> 28) };
+            brush.rgba = ["rgba(", brush.red, ", ", brush.green, ", ", brush.blue, ", ", 0.3, ")" ].join("");
+            
+            return brush;
+        }
+        
+        function createEvent(ctx) {
+            var listeners = [], addObj = { add: add };
+            
+            function add(listener) { listeners.push(listener); return addObj; };
+            
+            add.trigger = function trigger(e) {
+                for(var i = 0; i < listeners.length; i++) { listeners[i].apply(ctx, arguments); }
+            };
+            
+            return add;
+        }
+    
+        return function DrawLayer(ctx) {
+            var points = [];
+            
+            ctx.lineCap = "round";
+            ctx.clear = function() { this.clearRect(0, 0, 500, 500); };
+            
+            this.start = function(x, y, brush) {
+                var brush = parseBrush(brushNum);
+                ctx.strokeStyle = brush.rgba;
+                ctx.lineWidth = brush.width;
+                
+                points = [ { x: x >> 0, y: y >> 0 } ];
+            };
+            
+            this.addPoint = function(x, y) {
+                points.push({ x: x >> 0, y: y  >> 0 });
+                
+                ctx.clear();
+                ctx.beginPath();
+                ctx.moveTo(points[0].x, points[0].y);
+                
+                for(var i = 0; i < points.length; i++) {
+                    ctx.lineJoin = "round";
+                    ctx.lineTo(points[i].x, points[i].y);
+                }
+                
+                ctx.stroke();
+            };
+            
+            this.end = function(x, y) {
+                this.addPoint(x, y);
+                this.onEnd.trigger(points, ctx);
+            };
+            
+            this.onEnd = createEvent(this);
+        };
+    })();
+    
+    var userLayer = new DrawLayer(document.getElementById("user-layer").getContext("2d"));
+    userLayer.onEnd(function(points, ctx) {
+        var data = document.getElementById("user-layer").toDataURL("image/png");
+        
+        var img = document.createElement("img");
+        img.onload = function() { ctx.clear(); baseCtx.drawImage(img, 0, 0); };
+        img.src = data;
+    });
+    
+    var paper = document.getElementById("paper");
     var isMouseDown = false, basePos = $(paper).offset(), lastPnt;
     $(document)
         .mousedown(function(e) {
@@ -125,11 +215,9 @@ $(function() {
             if(isMouseDown) {
                 var x = e.pageX - basePos.left, y = e.pageY - basePos.top;
                 
+                userLayer.start(x, y, brushNum);
                 sendPoint(x, y, brushNum);
                 lastPnt = { x: x, y: y, time: (new Date()).getTime() };
-                var brush = parseBrush(brushNum);
-                ctx.strokeStyle = brush.rgba;
-                ctx.lineWidth = brush.width;
             }
         })
         .mousemove(function(e) {
@@ -141,12 +229,7 @@ $(function() {
             
             var x = e.pageX - basePos.left, y = e.pageY - basePos.top;
             
-            ctx.lineJoin = "round";
-            ctx.beginPath();
-            ctx.moveTo(lastPnt.x, lastPnt.y);
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            
+            userLayer.addPoint(x, y);
             sendPoint(x, y, brushNum);
             lastPnt = { x: x, y: y, time: curTime };
         })
@@ -154,34 +237,16 @@ $(function() {
             if(isMouseDown) {
                 var x = e.pageX - basePos.left, y = e.pageY - basePos.top;
                 
-    ctx.lineJoin = "round";
-                ctx.beginPath();
-                ctx.moveTo(lastPnt.x, lastPnt.y);
-                ctx.lineTo(x, y);
-                ctx.stroke();
-                
+                userLayer.end(x, y);
                 sendPoint(x, y, brushNum, true);
             }
             
             isMouseDown = false;
         });
-    
-    function parseBrush(number) {
-        number = +number;
         
-        var brush = { red: (number & 0x00FF0000) >> 16,
-                      green: (number & 0x0000FF00) >> 8,
-                      blue: (number & 0x000000FF) >> 0,
-                      alpha: ((number & 0x0F000000) >> 24) / 0x0F,
-                      width: ((number & 0xF0000000) >>> 28) };
-        brush.rgba = ["rgba(", brush.red, ", ", brush.green, ", ", brush.blue, ", ", brush.alpha, ")" ].join("");
-        
-        return brush;
-    }
-    
-    var brushNum = 0x0A000000;
+    var brushNum = 0xAA000000;
     $("#brush").delegate(".brush-color", "click", function() {
-        brushNum = 0x8A000000 | parseInt($(this).attr("hex-color"), 16);
+        brushNum = 0xAA000000 | parseInt($(this).attr("hex-color"), 16);
         console.log("color: " + brushNum);
     });
     
