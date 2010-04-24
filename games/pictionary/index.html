@@ -33,7 +33,6 @@
     <h1>Pictionary</h1>
     <div id="paper">
         <canvas id="base" width="500" height="500" unselectable="on"></canvas>
-        <canvas id="user-layer" width="500" height="500" unselectable="on"></canvas>
     </div>
     <iframe src="http://www.the-xavi.com/chat/pictionary" frameborder="0">
         You can't join the chat =(
@@ -45,7 +44,7 @@
         <div class="brush-color" hex-color="000000" style="background-color: #000000;">black</div>
     </div>
     <br/>
-    <a id="clear" href="404.html">Clear Board</a>
+    <a id="clear" href="#">Clear Board</a>
     (: file ~ ./links.html :)
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js" type="text/javascript"></script>
 <script type="text/javascript" src="/json2.js"></script>
@@ -55,83 +54,11 @@ $(function() {
     var baseCtx = document.getElementById("base").getContext("2d");
     var ch = new Channel("pictionary");
     
-    $("#clear").click(function() { ctx.clear(); ch.clear(); drawPoints.clear(); return false; });
+    baseCtx.clear = function() { this.clearRect(0, 0, 500, 500); };
+    baseCtx.lineCap = "round";
+    baseCtx.lineJoin = "round";
     
-    var drawPoints = (function() {
-        var points = {};
-        var timer = window.setInterval(function() {
-            for(var id in points) {
-                var pnt1 = points[id][0], pnt2 = points[id][1];
-                
-                if(pnt1 && "clear" in pnt1) { ctx.clear(); points[id].shift(); continue; }
-                
-                if(pnt2 && "clear" in pnt2) { ctx.clear(); points[id].shift(); points[id].shift(); continue; }
-                
-                if(!pnt1 || !pnt2) { continue; }
-                
-                var diff = (new Date()).getTime() - points[id].offset;
-                if(diff < pnt2.time - pnt1.time) { continue; }
-                
-                brush = parseBrush(pnt1.brush);
-                ctx.strokeStyle = brush.rgba;
-                ctx.lineWidth = brush.width;
-                ctx.beginPath();
-                ctx.moveTo(pnt1.x, pnt1.y);
-                ctx.lineTo(pnt2.x, pnt2.y);
-                ctx.stroke();
-                
-                points[id].shift();
-                if(points[id][0].end) { points[id].shift(); }
-                
-                if(points[id].length === 0) { delete points[id]; }
-                else { points[id].offset += diff; }
-            }
-        }, 20);
-        
-        function drawPoints(data) {
-            if(!data || !data.content) { return; }
-            
-            var id = data.userId, content = data.content;
-            points[id] = points[id] || [];
-            
-            if("clear" in data.content) { points[id].push(data.content); return; }
-            
-            if(data.content.length < 2) { return; }
-                        
-            var offset = -content[0].time;
-            if(points[id].length > 0) { offset = points[id][points[id].length - 1].time; }            
-            for(var i = 0; i < content.length; i++) { content[i].time += offset }
-            
-            Array.prototype.push.apply(points[id], content);
-            
-            if(!points[id].offset) { points[id].offset = (new Date()).getTime(); }
-        };
-        
-        drawPoints.clear = function() { points = {}; };
-        
-        return function() { }; //drawPoints;
-    })();
-    ch.onReceive(drawPoints);
-    
-    var sendPoint = (function() {
-        var points = [], lastTime = 0;
-        function sendPoint(x, y, brushNum, forced) {
-            var curTime = (new Date()).getTime();
-            
-            points.push({ x: +x >> 0, y: +y >> 0, "brush": brushNum,
-                          time: (curTime - lastTime) % 10000, end: forced });
-            
-            if(!forced && curTime - lastTime < 250) { return; }
-            lastTime = curTime;
-            
-            if(points.length < 2) { return; }
-            
-            ch.send(points);
-            points.length = 0;
-        };
-        
-        return function() { };
-    })();
+    $("#clear").click(function() { baseCtx.clear(); ch.clear(); drawPoints.clear(); return false; });
     
     var DrawLayer = (function() {        
         function parseBrush(number) {
@@ -164,13 +91,15 @@ $(function() {
             
             ctx.lineCap = "round";
             ctx.clear = function() { this.clearRect(0, 0, 500, 500); };
+            ctx.lineJoin = "round";
             
-            this.start = function(x, y, brush) {
+            this.start = function(x, y, brushNum) {
                 var brush = parseBrush(brushNum);
                 ctx.strokeStyle = brush.rgba;
                 ctx.lineWidth = brush.width;
                 
                 points = [ { x: x >> 0, y: y >> 0 } ];
+                points.brush = brush;
             };
             
             this.addPoint = function(x, y) {
@@ -179,12 +108,7 @@ $(function() {
                 ctx.clear();
                 ctx.beginPath();
                 ctx.moveTo(points[0].x, points[0].y);
-                
-                for(var i = 0; i < points.length; i++) {
-                    ctx.lineJoin = "round";
-                    ctx.lineTo(points[i].x, points[i].y);
-                }
-                
+                for(var i = 1; i < points.length; i++) { ctx.lineTo(points[i].x, points[i].y); }
                 ctx.stroke();
             };
             
@@ -197,13 +121,115 @@ $(function() {
         };
     })();
     
-    var userLayer = new DrawLayer(document.getElementById("user-layer").getContext("2d"));
-    userLayer.onEnd(function(points, ctx) {
-        var data = document.getElementById("user-layer").toDataURL("image/png");
+    var drawPoints = (function() {
+        var points = {};
+        var timer = window.setInterval(function() {
+            for(var id in points) {
+                var pnt1 = points[id][0];
+                
+                if(!pnt1) { continue; }
+                
+                if("clear" in pnt1) { baseCtx.clear(); points[id].shift(); continue; }
+                
+                var diff = (new Date()).getTime() - points[id].offset;
+                if(diff < pnt1.time - points[id].lastTime) { continue; }
+                
+                if(pnt1.type === "start") { points[id].layer.start(pnt1.x, pnt1.y, pnt1.brush); }
+                else if(pnt1.type === "end") { points[id].layer.end(pnt1.x, pnt1.y); }
+                else { points[id].layer.addPoint(pnt1.x, pnt1.y); }
+                points[id].shift();
+                
+                if(pnt1.type === "end" && points[id].length === 0) {
+                    points[id].layer.destroy(); 
+                    delete points[id]; 
+                }
+                else {
+                    points[id].offset += diff; 
+                    points[id].lastTime = pnt1.time;
+                }
+            }
+        }, 20);
         
-        var img = document.createElement("img");
-        img.onload = function() { ctx.clear(); baseCtx.drawImage(img, 0, 0); };
-        img.src = data;
+        function drawPoints(data) {
+            if(!data || !data.content) { return; }
+            
+            var id = data.userId, content = data.content;
+            points[id] = points[id] || [];
+            
+            if("clear" in data.content) { points[id].push(data.content); return; }
+            
+            if(data.content.length < 2) { return; }
+                        
+            var offset = -content[0].time;
+            if(points[id].length > 0) { offset = points[id][points[id].length - 1].time; }            
+            for(var i = 0; i < content.length; i++) { content[i].time += offset }
+            
+            Array.prototype.push.apply(points[id], content);
+            
+            if(!points[id].offset) { points[id].offset = (new Date()).getTime(); }
+            if(!points[id].layer) {
+                var canvas = $("<canvas width='500' height='500' unselectable='on'></canvas>")[0];
+                
+                $("#paper").append(canvas);
+                
+                points[id].layer = new DrawLayer(canvas.getContext("2d"));
+                points[id].layer.start(points[id][0].x, points[id][0].y, points[id][0].brush);
+                points[id].layer.destroy = function() { $(canvas).remove(); };
+                points[id].layer.onEnd(function(points, ctx) {
+                    baseCtx.strokeStyle = points.brush.rgba;
+                    baseCtx.lineWidth = points.brush.width;
+                    
+                    baseCtx.beginPath();
+                    baseCtx.moveTo(points[0].x, points[0].y);
+                    for(var i = 1; i < points.length; i++) { baseCtx.lineTo(points[i].x, points[i].y); }        
+                    baseCtx.stroke();
+                    
+                    ctx.clear();
+                });
+                
+                points[id].shift();
+            }
+        };
+        
+        drawPoints.clear = function() { points = {}; };
+        
+        return drawPoints;
+    })();
+    ch.onReceive(drawPoints);
+    
+    var sendPoint = (function() {
+        var points = [], lastTime = 0;
+        
+        return function sendPoint(x, y, type, brushNum) {
+            var curTime = (new Date()).getTime();
+            
+            points.push({ x: +x >> 0, y: +y >> 0, "brush": brushNum,
+                          time: (curTime - lastTime) % 10000, type: type });
+            
+            if(type !== "end" && curTime - lastTime < 250) { return; }
+            lastTime = curTime;
+            
+            if(points.length < 2) { return; }
+            
+            ch.send(points);
+            points.length = 0;
+        };
+    })();
+    
+    var canvas = $("<canvas width='500' height='500' unselectable='on'></canvas>")[0];
+    $("#paper").append(canvas);
+    
+    var userLayer = new DrawLayer(canvas.getContext("2d"));
+    userLayer.onEnd(function(points, ctx) {
+        baseCtx.strokeStyle = points.brush.rgba;
+        baseCtx.lineWidth = points.brush.width;
+        
+        baseCtx.beginPath();
+        baseCtx.moveTo(points[0].x, points[0].y);
+        for(var i = 1; i < points.length; i++) { baseCtx.lineTo(points[i].x, points[i].y); }        
+        baseCtx.stroke();
+        
+        ctx.clear();
     });
     
     var paper = document.getElementById("paper");
@@ -216,7 +242,7 @@ $(function() {
                 var x = e.pageX - basePos.left, y = e.pageY - basePos.top;
                 
                 userLayer.start(x, y, brushNum);
-                sendPoint(x, y, brushNum);
+                sendPoint(x, y, "start", brushNum);
                 lastPnt = { x: x, y: y, time: (new Date()).getTime() };
             }
         })
@@ -230,7 +256,7 @@ $(function() {
             var x = e.pageX - basePos.left, y = e.pageY - basePos.top;
             
             userLayer.addPoint(x, y);
-            sendPoint(x, y, brushNum);
+            sendPoint(x, y);
             lastPnt = { x: x, y: y, time: curTime };
         })
         .mouseup(function(e) {
@@ -238,7 +264,7 @@ $(function() {
                 var x = e.pageX - basePos.left, y = e.pageY - basePos.top;
                 
                 userLayer.end(x, y);
-                sendPoint(x, y, brushNum, true);
+                sendPoint(x, y, "end");
             }
             
             isMouseDown = false;
@@ -247,7 +273,6 @@ $(function() {
     var brushNum = 0xAA000000;
     $("#brush").delegate(".brush-color", "click", function() {
         brushNum = 0xAA000000 | parseInt($(this).attr("hex-color"), 16);
-        console.log("color: " + brushNum);
     });
     
     ch.start();
