@@ -132,7 +132,9 @@ $(function() {
                 if("clear" in pnt1) { baseCtx.clear(); points[id].shift(); continue; }
                 
                 var diff = (new Date()).getTime() - points[id].offset;
-                if(diff < pnt1.time - points[id].lastTime) { continue; }
+                var threshold = pnt1.time - points[id].lastTime;
+                threshold *= Math.min(1, 200 / threshold); // Adjust time to make long waits shorter
+                if(diff < threshold) { continue; }
                 
                 if(pnt1.type === "start") { points[id].layer.start(pnt1.x, pnt1.y, pnt1.brush); }
                 else if(pnt1.type === "end") { points[id].layer.end(pnt1.x, pnt1.y); }
