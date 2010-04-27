@@ -47,7 +47,7 @@
     <a id="clear" href="#">Clear Board</a>
     (: file ~ ./links.html :)
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js" type="text/javascript"></script>
-<script type="text/javascript" src="/json2.js"></script>
+<script src="/json2.js" type="text/javascript"></script>
 <script src="/client.js" type="text/javascript"></script>
 <script>
 $(function() { 
@@ -193,7 +193,10 @@ $(function() {
             }
         };
         
-        drawPoints.clear = function() { points = {}; };
+        drawPoints.clear = function() { 
+            for(var id in points) { points[id].destroy(); } 
+            points = {};
+        };
         
         return drawPoints;
     })();
@@ -277,7 +280,7 @@ $(function() {
         brushNum = 0xAA000000 | parseInt($(this).attr("hex-color"), 16);
     });
     
-    ch.start();
+    $(window).load(ch.start());
 });
 </script>
 </body>
