@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
-<meta http-equiv="X-UA-Compatible" content="IE=7" />
 <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=7" />
+    <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.0/themes/excite-bike/jquery-ui.css" type="text/css" media="screen">
     <title>Pictionary</title>
     <style>
         #paper {
@@ -39,6 +40,8 @@
     </iframe>
     <br/>
     <div id="brush">
+        <div id="alpha"></div>
+        <div id="width"></div>
         <div class="brush-color" hex-color="0000FF" style="background-color: #0000FF;">blue</div>
         <div class="brush-color" hex-color="00FF00" style="background-color: #00FF00;">green</div>
         <div class="brush-color" hex-color="000000" style="background-color: #000000;">black</div>
@@ -47,6 +50,7 @@
     <a id="clear" href="#">Clear Board</a>
     (: file ~ ./links.html :)
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js" type="text/javascript"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.1/jquery-ui.min.js" type="text/javascript"></script>
 <script src="/json2.js" type="text/javascript"></script>
 <script src="/client.js" type="text/javascript"></script>
 <script>
@@ -68,8 +72,8 @@ $(function() {
                           green: (number & 0x0000FF00) >> 8,
                           blue: (number & 0x000000FF) >> 0,
                           alpha: ((number & 0x0F000000) >> 24) / 0x0F,
-                          width: ((number & 0xF0000000) >>> 28) };
-            brush.rgba = ["rgba(", brush.red, ", ", brush.green, ", ", brush.blue, ", ", 0.3, ")" ].join("");
+                          width: ((number & 0xF0000000) >>> 28) + 1 };
+            brush.rgba = ["rgba(", brush.red, ", ", brush.green, ", ", brush.blue, ", ", brush.alpha, ")" ].join("");
             
             return brush;
         }
@@ -277,8 +281,13 @@ $(function() {
         
     var brushNum = 0xAA000000;
     $("#brush").delegate(".brush-color", "click", function() {
-        brushNum = 0xAA000000 | parseInt($(this).attr("hex-color"), 16);
+        brushNum = (brushNum & 0xFF000000) | parseInt($(this).attr("hex-color"), 16);
     });
+    
+    $("#alpha").slider({ min: 0, max: 15, range: "min", value: 10,
+                          slide: function(e, ui) { brushNum = (brushNum & 0xF0FFFFFF) | (ui.value << 24); } });
+    $("#width").slider({ min: 0, max: 15, range: "min" , value: 10,
+                         slide: function(e, ui) { brushNum = (brushNum & 0x0FFFFFFF) | (ui.value << 28); } });
     
     $(window).load(ch.start());
 });
