@@ -64,15 +64,19 @@ $(function() {
     
     $("#clear").click(function() { baseCtx.clear(); ch.clear(); drawPoints.clear(); return false; });
     
-    var DrawLayer = (function() {        
+    var DrawLayer = (function() {
+        var alphas = [ .03, .05, .1, .15, .20, .25, .3, .35, .4, .45, .5, .55, .6, .7, .8, .9 ];
+                      //1    2    3   4    5    6    7    8   9   10   11  12   13  14  15 16
+        var widths = [ 1, 2, 3, 5, 8, 13, 20, 26, 32, 42, 52, 68, 84, 110, 136, 178 ];
+                     //1  2  3  4  5  6   7   8   9   10  11  12  13  14   15   16
         function parseBrush(number) {
             number = +number;
             
             var brush = { red: (number & 0x00FF0000) >> 16,
                           green: (number & 0x0000FF00) >> 8,
                           blue: (number & 0x000000FF) >> 0,
-                          alpha: ((number & 0x0F000000) >> 24) / 0x0F,
-                          width: ((number & 0xF0000000) >>> 28) + 1 };
+                          alpha: alphas[(number & 0x0F000000) >> 24],
+                          width: widths[(number & 0xF0000000) >>> 28] };
             brush.rgba = ["rgba(", brush.red, ", ", brush.green, ", ", brush.blue, ", ", brush.alpha, ")" ].join("");
             
             return brush;
@@ -198,7 +202,7 @@ $(function() {
         };
         
         drawPoints.clear = function() { 
-            for(var id in points) { points[id].destroy(); } 
+            for(var id in points) { points[id].layer.destroy(); } 
             points = {};
         };
         
