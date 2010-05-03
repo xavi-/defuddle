@@ -30,8 +30,8 @@
             top: 0px;
             left: 0px;
         }
-                
-        #brush{ clear: both; overflow: hidden; font-size: 16px; }
+        
+        #brush { clear: both; overflow: hidden; font-size: 16px; }
         
         #alpha-width-container {
             width: 125px;
@@ -178,7 +178,7 @@ $(function() {
             return add;
         }
     
-        return function DrawLayer(ctx) {
+        function DrawLayer(ctx) {
             var points = [];
             
             ctx.lineCap = "round";
@@ -210,7 +210,11 @@ $(function() {
             };
             
             this.onEnd = createEvent(this);
-        };
+        }
+        
+        DrawLayer.parseBrush = parseBrush;
+        
+        return DrawLayer;
     })();
     
     var drawPoints = (function() {
@@ -312,11 +316,25 @@ $(function() {
             points.length = 0;
         };
     })();
+        
+    var userCanvas = $("<canvas width='630' height='500' unselectable='on'></canvas>")[0];
+    $("#paper").append(userCanvas);
     
-    var canvas = $("<canvas width='630' height='500' unselectable='on'></canvas>")[0];
-    $("#paper").append(canvas);
+    var userCtx = userCanvas.getContext("2d");
+    function drawHint(x, y) {
+        var brush = DrawLayer.parseBrush(brushNum);
+        userCtx.clear();
+        userCtx.strokeStyle = brush.rgba;
+        userCtx.fillStyle = ["rgba(", brush.red, ", ", brush.green, ", ", brush.blue, ", ", 
+                                      brush.alpha / 3, ")"].join("");
+        userCtx.lineWidth = 2;
+        userCtx.beginPath();
+        userCtx.arc(x, y, brush.width / 2, 0, Math.PI * 2, true);
+        userCtx.stroke();
+        userCtx.fill();
+    }
     
-    var userLayer = new DrawLayer(canvas.getContext("2d"));
+    var userLayer = new DrawLayer(userCtx);
     userLayer.onEnd(function(points, ctx) {
         baseCtx.strokeStyle = points.brush.rgba;
         baseCtx.lineWidth = points.brush.width;
@@ -344,13 +362,17 @@ $(function() {
             }
         })
         .mousemove(function(e) {
-            if(!isMouseDown) { return; }
+            var x = e.pageX - basePos.left, y = e.pageY - basePos.top;
+            
+            if(!isMouseDown) { 
+                if(e.target == paper || $.contains(paper, e.target)) { drawHint(x, y); }
+                else { userCtx.clear(); }
+                
+                return; 
+            }
             
             var curTime = (new Date()).getTime();
-            
             if(curTime - lastPnt.time < 20) { return; }
-            
-            var x = e.pageX - basePos.left, y = e.pageY - basePos.top;
             
             userLayer.addPoint(x, y);
             sendPoint(x, y);
