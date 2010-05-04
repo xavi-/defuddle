@@ -15,10 +15,6 @@
     
         #paper {
             border: 1px solid black;
-            -moz-user-select: none;
-            -khtml-user-select: none;
-            -webkit-user-select: none;
-            user-select: none;
             cursor: pointer;
             width: 630px;
             height: 500px;
@@ -52,6 +48,14 @@
             float: left;
             width: 30px;
             height: 25px;
+            cursor: pointer;
+        }
+        
+        #brush, #paper {
+            -moz-user-select: none;
+            -khtml-user-select: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
     </style>
     <!--[if IE]><script type="text/javascript" src="/excanvas.js"></script><![endif]-->
@@ -195,7 +199,7 @@ $(function() {
             };
             
             this.addPoint = function(x, y) {
-                points.push({ x: x >> 0, y: y  >> 0 });
+                points.push({ x: x >> 0, y: y >> 0 });
                 
                 ctx.clear();
                 ctx.beginPath();
