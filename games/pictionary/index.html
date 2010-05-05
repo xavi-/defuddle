@@ -324,20 +324,7 @@ $(function() {
     var userCanvas = $("<canvas width='630' height='500' unselectable='on'></canvas>")[0];
     $("#paper").append(userCanvas);
     
-    var userCtx = userCanvas.getContext("2d");
-    function drawHint(x, y) {
-        var brush = DrawLayer.parseBrush(brushNum);
-        userCtx.clear();
-        userCtx.strokeStyle = brush.rgba;
-        userCtx.fillStyle = ["rgba(", brush.red, ", ", brush.green, ", ", brush.blue, ", ", 
-                                      brush.alpha / 3, ")"].join("");
-        userCtx.lineWidth = 2;
-        userCtx.beginPath();
-        userCtx.arc(x, y, brush.width / 2, 0, Math.PI * 2, true);
-        userCtx.stroke();
-        userCtx.fill();
-    }
-    
+    var userCtx = userCanvas.getContext("2d");    
     var userLayer = new DrawLayer(userCtx);
     userLayer.onEnd(function(points, ctx) {
         baseCtx.strokeStyle = points.brush.rgba;
@@ -350,6 +337,19 @@ $(function() {
         
         ctx.clear();
     });
+    
+    function drawHint(x, y) {
+        var brush = DrawLayer.parseBrush(brushNum);
+        userCtx.clear();
+        userCtx.strokeStyle = brush.rgba;
+        userCtx.fillStyle = ["rgba(", brush.red, ", ", brush.green, ", ", brush.blue, ", ", 
+                                      brush.alpha / 3, ")"].join("");
+        userCtx.lineWidth = 2;
+        userCtx.beginPath();
+        userCtx.arc(x, y, brush.width / 2, 0, Math.PI * 2, true);
+        userCtx.stroke();
+        userCtx.fill();
+    }
     
     var paper = document.getElementById("paper");
     var isMouseDown = false, basePos = $(paper).offset(), lastPnt;
