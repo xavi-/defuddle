@@ -95,14 +95,13 @@ function createKungFuChessGame(channel) {
             channel.data = [];
             
             var users = channel.users();
-            var canidates = Object.keys(users);
-            if(canidates.length < 2) { return; }
+            if(users.length < 2) { return; }
             
             game.reset();
             
             players = {};
-            players[canidates[0]] = "white";
-            players[canidates[1]] = "black";
+            players[users[0].userId] = "white";
+            players[users[1].userId] = "black";
             
             sendMoreInfo("0", { "new-game": players  });
             sys.puts("New Kung-Fu Chess Game: " + sys.inspect(players));
