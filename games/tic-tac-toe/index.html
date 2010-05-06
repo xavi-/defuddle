@@ -148,7 +148,7 @@
     $("#board").append(game.board.div);
     $("#new-game").click(function() { ch.clear(); game.reset(); return false; });
     
-    ch.start();
+    $(window).load(function() { setTimeout(function() { ch.start(); }, 0); });
 })();
 </script>
 </body>

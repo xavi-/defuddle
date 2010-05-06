@@ -403,7 +403,7 @@ $(function() {
     $("#width").slider({ min: 0, max: 15, range: "min" , value: 10,
                          slide: function(e, ui) { brushNum = (brushNum & 0x0FFFFFFF) | (ui.value << 28); } });
     
-    $(window).load(ch.start());
+    $(window).load(function() { setTimeout(function() { ch.start(); }, 0); });
 });
 </script>
 </body>
