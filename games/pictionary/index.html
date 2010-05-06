@@ -255,12 +255,12 @@ $(function() {
         function drawPoints(data) {
             if(!data || !data.content) { return; }
             
-            var id = data.userId, content = data.content;
-            points[id] = points[id] || [];
-            
-            if("clear" in data.content) { points[id].push(data.content); return; }
+            if("clear" in data.content) { drawPoints.clear(); return; }
             
             if(data.content.length < 2) { return; }
+            
+            var id = data.userId, content = data.content;
+            points[id] = points[id] || [];
                         
             var offset = -content[0].time;
             if(points[id].length > 0) { offset = points[id][points[id].length - 1].time; }            
