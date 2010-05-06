@@ -214,7 +214,7 @@
         }
     });
     
-    ch.start();
+    $(window).load(function() { ch.start() });
     
     $("#new-game").click(function() { ch.clear(); game.reset(); return false; });
 })();
