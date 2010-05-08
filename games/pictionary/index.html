@@ -150,7 +150,7 @@ $(function() {
     baseCtx.lineCap = "round";
     baseCtx.lineJoin = "round";
     
-    $("#clear").click(function() { baseCtx.clear(); ch.clear(); drawPoints.clear(); return false; });
+    $("#clear").click(function() { ch.clear(); baseCtx.clear(); drawPoints.clear(); return false; });
     
     var DrawLayer = (function() {
         var alphas = [ .03, .05, .1, .15, .20, .25, .3, .35, .4, .45, .5, .55, .6, .7, .8, .9 ];
@@ -229,7 +229,7 @@ $(function() {
                 
                 if(!pnt1) { continue; }
                 
-                if("clear" in pnt1) { baseCtx.clear(); points[id].shift(); continue; }
+                if("clear" in pnt1) { points[id].shift(); baseCtx.clear(); drawPoints.clear(); continue; }
                 
                 var diff = (new Date()).getTime() - points[id].offset;
                 var threshold = pnt1.time - points[id].lastTime;
@@ -244,8 +244,7 @@ $(function() {
                 if(pnt1.type === "end" && points[id].length === 0) {
                     points[id].layer.destroy(); 
                     delete points[id]; 
-                }
-                else {
+                } else {
                     points[id].offset += diff; 
                     points[id].lastTime = pnt1.time;
                 }
@@ -255,13 +254,13 @@ $(function() {
         function drawPoints(data) {
             if(!data || !data.content) { return; }
             
-            if("clear" in data.content) { drawPoints.clear(); return; }
+            var id = data.userId, content = data.content;
+            points[id] = points[id] || [];
+            
+            if("clear" in content) { points[id].push(content); return; }
             
             if(data.content.length < 2) { return; }
             
-            var id = data.userId, content = data.content;
-            points[id] = points[id] || [];
-                        
             var offset = -content[0].time;
             if(points[id].length > 0) { offset = points[id][points[id].length - 1].time; }            
             for(var i = 0; i < content.length; i++) { content[i].time += offset }
@@ -294,7 +293,7 @@ $(function() {
         };
         
         drawPoints.clear = function() { 
-            for(var id in points) { points[id].layer.destroy(); } 
+            for(var id in points) if(points[id].layer) { points[id].layer.destroy(); } 
             points = {};
         };
         
