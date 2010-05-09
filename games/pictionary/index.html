@@ -293,8 +293,7 @@ $(function() {
         };
         
         drawPoints.clear = function() { 
-            for(var id in points) if(points[id].layer) { points[id].layer.destroy(); } 
-            points = {};
+            for(var id in points) if(points[id].layer) { points[id].layer.destroy(); }
         };
         
         return drawPoints;
