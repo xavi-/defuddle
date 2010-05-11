@@ -2,11 +2,14 @@
 <html>
 <head>
 <style>
-    #board {
+    #border-container {
         width: 360px;
-        height: 360px;
         border: 1px solid black;
+    }
+    
+    #board {
         background-image: url("/pics/chess-tile.png");
+        height: 360px;
     }
     
     .piece,
@@ -67,15 +70,30 @@
         text-align: center;
         font-family: arial;
     }
+    
+    #black-seat, #white-seat { cursor: pointer; text-align: center; }
+    
+    #black-seat {
+        background-color: #CCC;
+        border-bottom: 1px solid #777;
+    }
+    
+    #white-seat {
+        background-color: #EEE;
+        border-top: 1px solid #777;
+    }
+    
 </style>
 <title>Kung-fu Chess</title>
 </head>
 <body>
     <h1>Kung-fu Chess</h1>
-    <div id="board"></div>
+    <div id="border-container">
+        <div id="black-seat">Play as black</div>
+        <div id="board"></div>
+        <div id="white-seat">Play as white</div>
+    </div>
     <span id="player-status"></span>
-    <div id="black-seat">Sit down as the black player</div>
-    <div id="white-seat">Sit down as the white player</div>
     <br/>
     <a id="new-game" href="404.html">New Game</a>
     (: file ~ ./links.html :)
