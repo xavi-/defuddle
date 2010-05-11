@@ -83,7 +83,7 @@ chn.onCreate(function(id, channel) { sys.puts("New Channel called: " + id);
 
 function createKungFuChessGame(channel) {
     var kfc = require("./games/kung-fu-chess");
-    var players, game = new kfc.Game();
+    var players = {}, game = new kfc.Game();
     var LAG_TIME = 1000;
     
     function onBoard(pos) {
@@ -99,12 +99,18 @@ function createKungFuChessGame(channel) {
             
             game.reset();
             
-            players = {};
-            players[users[0].userId] = "white";
-            players[users[1].userId] = "black";
+            if(!players.white || !players.black) { return; }
             
             sendMoreInfo("0", { "new-game": players  });
             sys.puts("New Kung-Fu Chess Game: " + sys.inspect(players));
+            
+            return;
+        }
+        
+        if("sit" in msg.content) {
+            delete players[players[msg.content["sit"]]];
+            players[msg.content["sit"]] = msg.userId;
+            players[msg.userId] = msg.content["sit"];
             
             return;
         }

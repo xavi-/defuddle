@@ -74,6 +74,8 @@
     <h1>Kung-fu Chess</h1>
     <div id="board"></div>
     <span id="player-status"></span>
+    <div id="black-seat">Sit down as the black player</div>
+    <div id="white-seat">Sit down as the white player</div>
     <br/>
     <a id="new-game" href="404.html">New Game</a>
     (: file ~ ./links.html :)
@@ -194,12 +196,15 @@
     ch.onReceive(function(msg) {
         if("clear" in msg.content) {
             game.reset();
-        } else if("new-game" in msg.content) {
-            game.enable();
+        } else if("new-game" in msg.content) {            
             game.player = msg.content["new-game"][ch.userId()];
+            
+            game.enable();
             
             if(game.player) { $("#player-status").text("You're " + game.player); }
             else { $("#player-status").text("Sorry you're not playing..."); }
+        } else if("sit" in msg.content) {
+            console.log("some one sat down: " + JSON.stringify(msg.content));
         } else if("move" in msg.content) {
             var from = msg.content["move"].from, to = msg.content["move"].to;
             
@@ -215,6 +220,10 @@
     });
     
     $(window).load(function() { setTimeout(function() { ch.start(); }, 0); });
+    
+    $("#black-seat").click(function() { ch.send({ sit: "black" }); return false; });
+    
+    $("#white-seat").click(function() { ch.send({ sit: "white" }); return false; });
     
     $("#new-game").click(function() { ch.clear(); game.reset(); return false; });
 })();
