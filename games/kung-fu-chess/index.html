@@ -294,7 +294,11 @@
     
     $(window).load(function() { setTimeout(function() { ch.start(); }, 0); });
     
-    $("#new-game").click(function() { ch.clear(); game.reset(); return false; });
+    $("#new-game").click(function() {
+        if(game.player) { ch.clear(); game.reset(); }
+        else { alert("Sorry, only players can create a new game"); }
+        return false; 
+    });
 })();
 </script>
 </body>
