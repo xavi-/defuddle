@@ -74,7 +74,7 @@
     #black-seat, #white-seat { cursor: pointer; text-align: center; }
     
     #black-seat {
-        background-color: #CCC;
+        background-color: #BBB;
         border-bottom: 1px solid #777;
     }
     
@@ -93,7 +93,6 @@
         <div id="board"></div>
         <div id="white-seat">Play as white</div>
     </div>
-    <span id="player-status"></span>
     <br/>
     <a id="new-game" href="404.html">New Game</a>
     (: file ~ ./links.html :)
@@ -211,6 +210,59 @@
     grid.reorient(0, grid.tileHeight * 7);
     var game = new kfc.Game();
     
+    var displayButtons = (function() {
+        function getColor(elem) { return ($(elem).is("#black-seat") ? "black" : "white"); }
+        function sit() {
+            var color = getColor(this);
+            ch.send({ sit: color });
+            $(this)
+                .unbind("click", sit)
+                .bind("click", leave);
+            
+            game.player = color;
+            displayButtons();
+            
+            return false;
+        }
+        function leave() {
+            var color = getColor(this);
+            ch.send({ leave: color });
+            $(this)
+                .unbind("click", leave)
+                .bind("click", sit);
+            
+            game.player = null;
+            displayButtons();
+            
+            return false; 
+        }
+    
+        $("#black-seat, #white-seat").click(sit);
+        
+        return function displayButtons() {
+            if(!game.player) {
+                $("#white-seat, #black-seat")
+                    .unbind("mouseenter mouseleave") // hover event
+                    .text("Sorry you're not playing")
+                    .unbind("click").click(sit)
+                    .show();
+            } else {            
+                var isWhite = (game.player === "white");
+                
+                $("#white-seat").toggle(isWhite);
+                $("#black-seat").toggle(!isWhite);
+                
+                var text = (isWhite ? "You're White - destroy Black!" : "You're Black - destroy White!");
+                
+                $("#white-seat, #black-seat")
+                    .text(text)
+                    .hover(function() { $(this).text("Leave game =("); },
+                           function() { $(this).text(text); })
+                    .unbind("click").click(leave);
+            }
+        };
+    })();
+    
     ch.onReceive(function(msg) {
         if("clear" in msg.content) {
             game.reset();
@@ -219,10 +271,13 @@
             
             game.enable();
             
-            if(game.player) { $("#player-status").text("You're " + game.player); }
-            else { $("#player-status").text("Sorry you're not playing..."); }
+            displayButtons();
         } else if("sit" in msg.content) {
             console.log("some one sat down: " + JSON.stringify(msg.content));
+            //displayButtons();
+        } else if("leave" in msg.content) {
+            console.log("some one sat down: " + JSON.stringify(msg.content));
+            //displayButtons();
         } else if("move" in msg.content) {
             var from = msg.content["move"].from, to = msg.content["move"].to;
             
@@ -238,10 +293,6 @@
     });
     
     $(window).load(function() { setTimeout(function() { ch.start(); }, 0); });
-    
-    $("#black-seat").click(function() { ch.send({ sit: "black" }); return false; });
-    
-    $("#white-seat").click(function() { ch.send({ sit: "white" }); return false; });
     
     $("#new-game").click(function() { ch.clear(); game.reset(); return false; });
 })();

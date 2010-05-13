@@ -99,7 +99,10 @@ function createKungFuChessGame(channel) {
             
             game.reset();
             
-            if(!players.white || !players.black) { return; }
+            if(!players.white || !players.black) {
+                sys.puts("Player missing for kung-fu game: black: " + players.black + "; white: " + players.white);
+                return; 
+            }
             
             sendMoreInfo("0", { "new-game": players  });
             sys.puts("New Kung-Fu Chess Game: " + sys.inspect(players));
@@ -108,9 +111,22 @@ function createKungFuChessGame(channel) {
         }
         
         if("sit" in msg.content) {
-            delete players[players[msg.content["sit"]]];
-            players[msg.content["sit"]] = msg.userId;
-            players[msg.userId] = msg.content["sit"];
+            var color = msg.content["sit"];
+            var oldPlayer = players[color]; 
+            
+            if(oldPlayer) { delete players[oldPlayer]; }
+            
+            players[color] = msg.userId;
+            players[msg.userId] = color;
+            
+            return;
+        }
+        
+        if("leave" in msg.content) {
+            var oldColor = players[msg.userId];
+            
+            delete players[msg.userId];
+            if(oldColor) { players[oldColor] = null; }
             
             return;
         }
