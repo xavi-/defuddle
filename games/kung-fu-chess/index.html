@@ -242,7 +242,9 @@
         return function displayButtons() {
             if(!game.player) {
                 $("#white-seat, #black-seat")
-                    .unbind("mouseenter mouseleave") // hover event
+                    .unbind("mouseenter mouseleave")
+                    .hover(function() { $(this).text("Play as " + getColor(this)); },
+                           function() { $(this).text("Sorry you're not playing"); })
                     .text("Sorry you're not playing")
                     .unbind("click").click(sit)
                     .show();
@@ -256,6 +258,7 @@
                 
                 $("#white-seat, #black-seat")
                     .text(text)
+                    .unbind("mouseenter mouseleave")
                     .hover(function() { $(this).text("Leave game =("); },
                            function() { $(this).text(text); })
                     .unbind("click").click(leave);
