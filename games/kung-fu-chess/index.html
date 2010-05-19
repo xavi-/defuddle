@@ -289,11 +289,11 @@
             
             displayButtons();
         } else if("sit" in msg.content) {
-            console.log("some one sat down: " + JSON.stringify(msg.content));
-            //displayButtons();
+            if(msg.userId === ch.userId()) { game.player = msg.content.sit; }
+            displayButtons();
         } else if("leave" in msg.content) {
-            console.log("some one sat down: " + JSON.stringify(msg.content));
-            //displayButtons();
+            if(msg.userId === ch.userId()) { game.player = null; }
+            displayButtons();
         } else if("move" in msg.content) {
             var from = msg.content["move"].from, to = msg.content["move"].to;
             
