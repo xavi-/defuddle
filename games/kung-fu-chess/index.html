@@ -280,31 +280,53 @@
     })();
     
     ch.onReceive(function(msg) {
-        if("clear" in msg.content) {
-            game.reset();
-        } else if("new-game" in msg.content) {            
+        if("clear" in msg.content) { game.reset(); return; }
+        
+        if("new-game" in msg.content) {            
             game.player = msg.content["new-game"][ch.userId()];
             
             game.enable();
             
             displayButtons();
-        } else if("sit" in msg.content) {
+            
+            return;
+        }
+        
+        if("sit" in msg.content) {
             if(msg.userId === ch.userId()) { game.player = msg.content.sit; }
+            
             displayButtons();
-        } else if("leave" in msg.content) {
+            
+            return
+        }
+        
+        if("leave" in msg.content) {
             if(msg.userId === ch.userId()) { game.player = null; }
+            
             displayButtons();
-        } else if("move" in msg.content) {
+            
+            return;
+        }
+        
+        if("move" in msg.content) {
             var from = msg.content["move"].from, to = msg.content["move"].to;
             
             game.board[from.row][from.col].pos(to.row, to.col);
-        } else if("game-over" in msg.content) {
+            
+            return;
+        }
+        
+        if("game-over" in msg.content) {
             var congrats = (msg.content["game-over"].loser === game.player ? "Sorry. " : "Congrats! ");
             var winner = (msg.content["game-over"].loser === "white" ? "black" : "white");
+            
             game.disable();
+            
             $("<div class='game-over-text' />")
                 .text(congrats + winner + " won")
                 .appendTo("#board");
+            
+            return;
         }
     });
     
