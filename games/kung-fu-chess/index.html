@@ -223,28 +223,30 @@
     grid.reorient(0, grid.tileHeight * 7);
     var game = new kfc.Game();
     
-    var displayButtons = (function() {
+    var seating = (function() {
+        var seating = { display: displayButtons, white: null, black: null };
+    
         function getColor(elem) { return ($(elem).is("#black-seat") ? "black" : "white"); }
+        
         function sit() {
             var color = getColor(this);
-            ch.send({ sit: color });
-            $(this)
-                .unbind("click", sit)
-                .bind("click", leave);
             
+            ch.send({ sit: color });
             game.player = color;
+            seating[color] = ch.userId();
+            
             displayButtons();
             
             return false;
         }
+        
         function leave() {
             var color = getColor(this);
-            ch.send({ leave: color });
-            $(this)
-                .unbind("click", leave)
-                .bind("click", sit);
             
+            ch.send({ leave: color });
             game.player = null;
+            seating[color] = null;
+            
             displayButtons();
             
             return false; 
@@ -252,31 +254,56 @@
     
         $("#black-seat, #white-seat").click(sit);
         
-        return function displayButtons() {
+        function displayButtons() {
             if(!game.player) {
-                $("#white-seat, #black-seat")
+                var selector = [];
+                
+                if(seating.white == null) { selector.push("#white-seat"); }
+                if(seating.black == null) { selector.push("#black-seat"); }
+                
+                $("#white-seat, #black-seat").hide();
+                
+                $(selector.join(","))
                     .unbind("mouseenter mouseleave")
                     .hover(function() { $(this).text("Play as " + getColor(this)); },
-                           function() { $(this).text("Sorry you're not playing"); })
-                    .text("Sorry you're not playing")
+                           function() { $(this).text("Waiting for " + getColor(this) + " player..."); })
+                    .each(function() { $(this).text("Waiting for " + getColor(this) + " player...") })
                     .unbind("click").click(sit)
                     .show();
+                
+                if(seating.white != null && seating.black != null) {
+                    $("#white-seat, #black-seat")
+                        .unbind("mouseenter mouseleave")
+                        .hover(function() { $(this).text("Play as " + getColor(this)); },
+                               function() { $(this).text("Sorry you're not playing"); })
+                        .text("Sorry you're not playing")
+                        .unbind("click").click(sit)
+                        .show();
+                }
             } else {            
                 var isWhite = (game.player === "white");
                 
-                $("#white-seat").toggle(isWhite);
-                $("#black-seat").toggle(!isWhite);
+                if(seating.white == null) {
+                    $("#white-seat").text("Waiting for white player...").unbind().show();
+                } else if(seating.black == null) {
+                    $("#black-seat").text("Waiting for black player...").unbind().show();
+                } else {
+                    $("#white-seat").toggle(isWhite);
+                    $("#black-seat").toggle(!isWhite);
+                }
                 
-                var text = (isWhite ? "You're White - destroy Black!" : "You're Black - destroy White!");
-                
-                $("#white-seat, #black-seat")
+                var text = (isWhite ? "You're White - destroy Black!" : "You're Black - destroy White!");                
+                $(isWhite ? "#white-seat" : "#black-seat")
                     .text(text)
                     .unbind("mouseenter mouseleave")
                     .hover(function() { $(this).text("Leave game =("); },
                            function() { $(this).text(text); })
-                    .unbind("click").click(leave);
+                    .unbind("click").click(leave)
+                    .show();
             }
-        };
+        }
+        
+        return seating;
     })();
     
     ch.onReceive(function(msg) {
@@ -287,7 +314,7 @@
             
             game.enable();
             
-            displayButtons();
+            seating.display();
             
             return;
         }
@@ -295,15 +322,17 @@
         if("sit" in msg.content) {
             if(msg.userId === ch.userId()) { game.player = msg.content.sit; }
             
-            displayButtons();
+            seating[msg.content.sit] = msg.userId;
+            seating.display();
             
-            return
+            return;
         }
         
         if("leave" in msg.content) {
             if(msg.userId === ch.userId()) { game.player = null; }
             
-            displayButtons();
+            seating[msg.content.leave] = null;
+            seating.display();
             
             return;
         }
