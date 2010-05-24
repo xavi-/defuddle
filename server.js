@@ -11,8 +11,8 @@ var BindFileHandler = (function() {
             if(err) { throw err; };
             
             bind.to(data, context, function(data) {
-                res.sendHeader(200, { "Conent-Length": data.length,
-                                      "Content-Type": "text/html" });
+                res.writeHead(200, { "Conent-Length": data.length,
+                                     "Content-Type": "text/html" });
                 res.end(data, "utf8");
             });
         });
@@ -62,8 +62,8 @@ srv.urls["/libraries/hex.js"] = srv.staticFileHandler("./libraries/hexlib/src/he
             fs.readFile("./pics/" + picName + ".png", "binary", function(err, data) {
                 if(err) { throw err; }
                 
-                res.sendHeader(200, { "Content-Length": data.length,
-                                      "Content-Type": "image/png" });
+                res.writeHead(200, { "Content-Length": data.length,
+                                     "Content-Type": "image/png" });
                 res.end(data, "binary");
             });
         }
