@@ -153,8 +153,8 @@ $(function() {
     $("#clear").click(function() { ch.clear(); baseCtx.clear(); drawPoints.clear(); return false; });
     
     var DrawLayer = (function() {
-        var alphas = [ .03, .05, .1, .15, .20, .25, .3, .35, .4, .45, .5, .55, .6, .7, .8, .9 ];
-                      //1    2    3   4    5    6    7    8   9   10   11  12   13  14  15 16
+        var alphas = [ .9, .8, .7, .6, .55, .5, .45, .4, .35, .3, .25, .20, .15, .1, .05, .03 ];
+                      //1   2   3   4    5   6    7   8    9  10   11   12   13  14   15   16
         var widths = [ 1, 2, 3, 5, 8, 13, 20, 26, 32, 42, 52, 68, 84, 110, 136, 178 ];
                      //1  2  3  4  5  6   7   8   9   10  11  12  13  14   15   16
         function parseBrush(number) {
@@ -391,14 +391,14 @@ $(function() {
             isMouseDown = false;
         });
         
-    var brushNum = 0xAA000000;
+    var brushNum = 0x44000000;
     $("#colors").delegate(".brush-color", "click", function() {
         brushNum = (brushNum & 0xFF000000) | parseInt($(this).attr("hex-color"), 16);
     });
     
-    $("#alpha").slider({ min: 0, max: 15, range: "min", value: 10,
+    $("#alpha").slider({ min: 0, max: 15, range: "min", value: (brushNum & 0x0F000000) >> 24,
                           slide: function(e, ui) { brushNum = (brushNum & 0xF0FFFFFF) | (ui.value << 24); } });
-    $("#width").slider({ min: 0, max: 15, range: "min" , value: 10,
+    $("#width").slider({ min: 0, max: 15, range: "min" , value: (brushNum & 0xF0000000) >>> 28,
                          slide: function(e, ui) { brushNum = (brushNum & 0x0FFFFFFF) | (ui.value << 28); } });
     
     $(window).load(function() { setTimeout(function() { ch.start(); }, 0); });
