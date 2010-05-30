@@ -57,6 +57,12 @@
             -webkit-user-select: none;
             user-select: none;
         }
+        
+        .chat-cover {
+            position: absolute;
+            z-index: 999;
+            display: none;
+        }
     </style>
     <!--[if IE]><script type="text/javascript" src="/excanvas.js"></script><![endif]-->
 </head>
@@ -132,7 +138,7 @@
             </div>
             <a id="clear" href="#">Clear Board</a>
         </div>
-        <iframe src="http://chat.defuddle.me/pictionary" frameborder="0">
+        <iframe id="chat-room" src="http://chat.defuddle.me/pictionary" frameborder="0">
             You can't join the chat =(
         </iframe>
     </div>
@@ -336,6 +342,19 @@ $(function() {
         ctx.clear();
     });
     
+    var chatCover = (function() {
+        var chatCover = $("<div class='chat-cover' />");
+        var chatRoom = $("#chat-room");
+        
+        chatCover
+            .height(chatRoom.height())
+            .width(chatRoom.width())
+            .offset(chatRoom.offset())
+            .appendTo(document.documentElement);
+        
+        return chatCover;
+    })();
+    
     function drawHint(x, y) {
         var brush = DrawLayer.parseBrush(brushNum);
         userCtx.clear();
@@ -361,6 +380,8 @@ $(function() {
                 userLayer.start(x, y, brushNum);
                 sendPoint(x, y, "start", brushNum);
                 lastPnt = { x: x, y: y, time: (new Date()).getTime() };
+                
+                chatCover.show();
             }
         })
         .mousemove(function(e) {
@@ -386,6 +407,8 @@ $(function() {
                 
                 userLayer.end(x, y);
                 sendPoint(x, y, "end");
+                
+                chatCover.hide();
             }
             
             isMouseDown = false;
