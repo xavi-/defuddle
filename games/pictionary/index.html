@@ -382,7 +382,11 @@ $(function() {
                 lastPnt = { x: x, y: y, time: (new Date()).getTime() };
                 
                 chatCover.show();
+            
+                return false;
             }
+            
+            return true;
         })
         .mousemove(function(e) {
             var x = e.pageX - basePos.left, y = e.pageY - basePos.top;
