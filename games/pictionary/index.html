@@ -353,7 +353,7 @@ $(function() {
     var isMouseDown = false, basePos = $(paper).offset(), lastPnt;
     $(document)
         .mousedown(function(e) {
-            isMouseDown = (e.target == paper || $.contains(paper, e.target));
+            isMouseDown = (e.target === paper || $.contains(paper, e.target));
             
             if(isMouseDown) {
                 var x = e.pageX - basePos.left, y = e.pageY - basePos.top;
