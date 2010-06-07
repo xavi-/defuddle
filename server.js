@@ -52,7 +52,7 @@ srv.urls["/excanvas.js"] = srv.staticFileHandler("./libraries/excanvas.js", "app
 srv.urls["/libraries/hex.js"] = srv.staticFileHandler("./libraries/hexlib/src/hex.js", "application/x-javascript");
 
 (function() { // Servers pics directory.  Currently assumes all images are pngs
-    var regPic = new RegExp("/pics/([a-zA-Z0-9_-]+).png");
+    var regPic = new RegExp("/pics/([a-zA-Z0-9_-]+)\.png");
     srv.patterns.push({
         test: function(req) { return regPic.test(url.parse(req.url).pathname); },
         handler: function(req, res) {
