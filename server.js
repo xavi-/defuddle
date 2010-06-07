@@ -56,7 +56,7 @@ srv.urls["/libraries/hex.js"] = srv.staticFileHandler("./libraries/hexlib/src/he
     srv.patterns.push({
         test: function(req) { return regPic.test(url.parse(req.url).pathname); },
         handler: function(req, res) {
-            var uri = url.parse(req.url, true);
+            var uri = url.parse(req.url);
             var picName = regPic.exec(uri.pathname)[1];
             
             fs.readFile("./pics/" + picName + ".png", "binary", function(err, data) {
