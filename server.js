@@ -6,7 +6,7 @@ var bind = require("./libraries/bind-js");
 var srv = require("./libraries/xavlib/simple-router");
 
 var BindFileHandler = (function() {
-    function Handler(path, context, req, res) {
+    function handler(path, context, req, res) {
         fs.readFile(path, function(err, data) {
             if(err) { throw err; };
             
@@ -19,16 +19,18 @@ var BindFileHandler = (function() {
     }
 
     return function(path, context) {
-        return function(req, res) { Handler(path, context, req, res); }; 
+        return function(req, res) { handler(path, context, req, res); }; 
     };
 })();
 
-function bindLink(val, context) {
+function bindLink(callback, val, context) {
     val = JSON.parse(val);
     
-    if(context.page === val.name) { return val.name; }
-    else { return ["<a href='", val.url, "'>", val.name, "</a>"].join(""); }
+    if(context.page === val.name) { callback(val.name); }
+    else { callback(["<a href='", val.url, "'>", val.name, "</a>"].join("")); }
 }
+
+srv.patterns.push(srv.staticDirHandler("/pics/", "./pics/", "png", "image/png"));
 
 srv.urls["/"] = 
 srv.urls["/index.html"] = 
