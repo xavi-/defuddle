@@ -51,7 +51,7 @@ srv.urls["/kung-fu-chess.html"] = BindFileHandler("./games/kung-fu-chess/index.h
 srv.urls["/client.js"] = srv.staticFileHandler("./libraries/xavlib/channel/client.js", "application/x-javascript");
 srv.urls["/json2.js"] = srv.staticFileHandler("./libraries/json2.js", "application/x-javascript");
 srv.urls["/excanvas.js"] = srv.staticFileHandler("./libraries/excanvas.js", "application/x-javascript");
-srv.urls["/libraries/hex.js"] = srv.staticFileHandler("./libraries/hexlib/src/hex.js", "application/x-javascript");
+srv.urls["/libraries/hex.js"] = srv.staticFileHandler("./libraries/hexlib/dist/hex.js", "application/x-javascript");
 
 (function() { // Servers pics directory.  Currently assumes all images are pngs
     var regPic = new RegExp("/pics/([a-zA-Z0-9_-]+)\.png");
