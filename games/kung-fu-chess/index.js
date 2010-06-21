@@ -170,11 +170,11 @@
                 board[row][col].destroy("captured");
                 board[row][col] = this;
                 
-                var fistMove = !this.hasMoved;
+                var firstMove = !this.hasMoved;
                 this.hasMoved = true;
                 
                 this.onMove.trigger({ source: arguments[2], 
-                                      firstMove: fistMove,
+                                      firstMove: firstMove,
                                       oldPos: oldPos, 
                                       newPos: { row: row, col: col } });
                 this.lastMoved = new Date();

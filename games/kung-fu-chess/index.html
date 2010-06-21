@@ -150,7 +150,19 @@
                 stun.style.left = div.style.left = pos.x + "px";
                 stun.style.top = div.style.top = pos.y + "px";
                 
-                if(e.source === "user") { ch.send({ move: { from: e.oldPos, to: e.newPos } }); }
+                if(e.source === "user") {
+                    ch.send({ move: { piece: { color: piece.color, type: piece.type }, 
+                                      from: e.oldPos, to: e.newPos } }, 
+                            function() {  // Handle error -- undo move
+                                var oldPos = e.oldPos;
+                                var oldCell = piece.board[oldPos.row][oldPos.col];
+                                
+                                if(oldCell.isEmpty) { piece.pos(oldPos.row, oldPos.col); }
+                                else if(oldCell.color !== piece.color) { piece.destroy(); }
+                                // This is super hacky may never work...
+                                else { setTimeout(function() { piece.pos(oldPos.row, oldPos.col); }, 500);  }
+                            }); 
+                }
                 
                 stunned.push(piece);
             });
@@ -292,7 +304,7 @@
                     $("#black-seat").toggle(!isWhite);
                 }
                 
-                var text = (isWhite ? "You're White - destroy Black!" : "You're Black - destroy White!");                
+                var text = (isWhite ? "You're White - destroy Black!" : "You're Black - destroy White!");
                 $(isWhite ? "#white-seat" : "#black-seat")
                     .text(text)
                     .unbind("mouseenter mouseleave")
@@ -339,8 +351,14 @@
         
         if("move" in msg.content) {
             var from = msg.content["move"].from, to = msg.content["move"].to;
+            var mvPiece = msg.content["move"].piece, bdPiece = game.board[from.row][from.col];
             
-            game.board[from.row][from.col].pos(to.row, to.col);
+            if(mvPiece.color === bdPiece.color && mvPiece.type === bdPiece.type) {
+                bdPiece.pos(to.row, to.col);
+            } else {
+                game.board[to.row][to.col].destroy();
+                new new kfc.Piece(mvPiece.type, mvPiece.color, to.row, to.col, game.board);
+            }
             
             return;
         }
