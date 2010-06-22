@@ -34,43 +34,22 @@ srv.patterns.push(srv.staticDirHandler("/pics/", "./pics/", "png", "image/png"))
 
 srv.urls["/"] = 
 srv.urls["/index.html"] = 
-srv.urls["/pictionary.html"] = BindFileHandler("./games/pictionary/index.html", { page: "pictionary", link: bindLink });
+srv.urls["/pictionary"] = BindFileHandler("./games/pictionary/index.html", { page: "pictionary", link: bindLink });
 
 srv.urls["/block.js"] = srv.staticFileHandler("./games/block/index.js", "application/x-javascript");
-srv.urls["/block-game.html"] = BindFileHandler("./games/block/index.html",
-                                               { page: "block game", link: bindLink });
+srv.urls["/block-game"] = BindFileHandler("./games/block/index.html", { page: "block game", link: bindLink });
 
 srv.urls["/tic-tac-toe.js"] = srv.staticFileHandler("./games/tic-tac-toe/index.js", "application/x-javascript");
-srv.urls["/tic-tac-toe.html"] = BindFileHandler("./games/tic-tac-toe/index.html", 
-                                                { page: "tic-tac-toe", link: bindLink });
+srv.urls["/tic-tac-toe"] = BindFileHandler("./games/tic-tac-toe/index.html", { page: "tic-tac-toe", link: bindLink });
 
 srv.urls["/kung-fu-chess.js"] = srv.staticFileHandler("./games/kung-fu-chess/index.js", "application/x-javascript");
-srv.urls["/kung-fu-chess.html"] = BindFileHandler("./games/kung-fu-chess/index.html", 
-                                                  { page: "kung-fu chess", link: bindLink });
+srv.urls["/kung-fu-chess"] = BindFileHandler("./games/kung-fu-chess/index.html", 
+                                             { page: "kung-fu chess", link: bindLink });
 
 srv.urls["/client.js"] = srv.staticFileHandler("./libraries/xavlib/channel/client.js", "application/x-javascript");
 srv.urls["/json2.js"] = srv.staticFileHandler("./libraries/json2.js", "application/x-javascript");
 srv.urls["/excanvas.js"] = srv.staticFileHandler("./libraries/excanvas.js", "application/x-javascript");
 srv.urls["/libraries/hex.js"] = srv.staticFileHandler("./libraries/hexlib/dist/hex.js", "application/x-javascript");
-
-(function() { // Servers pics directory.  Currently assumes all images are pngs
-    var regPic = new RegExp("/pics/([a-zA-Z0-9_-]+)\.png");
-    srv.patterns.push({
-        test: function(req) { return regPic.test(url.parse(req.url).pathname); },
-        handler: function(req, res) {
-            var uri = url.parse(req.url);
-            var picName = regPic.exec(uri.pathname)[1];
-            
-            fs.readFile("./pics/" + picName + ".png", "binary", function(err, data) {
-                if(err) { throw err; }
-                
-                res.writeHead(200, { "Content-Length": data.length,
-                                     "Content-Type": "image/png" });
-                res.end(data, "binary");
-            });
-        }
-    });
-})();
 
 // /channel/<session-id>/send?msg=<json> => returns an info-id
 // /channel/<session-id>/read?info-id=<int-id> => returns a list of json messages
