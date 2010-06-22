@@ -19,6 +19,8 @@
     }
     
     .piece,
+    .piece-background,
+    .selected-background,
     .stunned-background {
         position: absolute;
         width: 45px;
@@ -31,6 +33,17 @@
         background-repeat: no-repeat;
         background-position: center 0px;
         z-index: 2;
+    }
+    
+    .piece-background {
+        opacity: 0;
+    }
+    
+    .selected-background {
+        background-image: -webkit-gradient(radial, center center, 1, center center, 30, from(rgba(255, 255, 255, 0)), to(rgba(0, 200, 0, 255)));
+        background: -moz-radial-gradient(rgba(255, 255, 255, 0), rgba(0, 200, 0, 255));
+        z-index: 1;
+        opacity: .8;
     }
     
     .stunned-background {
@@ -132,12 +145,12 @@
             piece.div = div;
             piece.board.grid.root.appendChild(div);
             
-            var stun = document.createElement("div");
+            var back = document.createElement("div");
             
-            stun.className = "stunned-background";
+            back.className = "piece-background";
             
-            piece.stun = stun;
-            grid.root.appendChild(piece.stun);
+            piece.back = back;
+            grid.root.appendChild(piece.back);
             
             piece.onTypeChange(function(e) {
                 div.className = ["piece", piece.type, piece.color].join(" ");
@@ -147,8 +160,8 @@
             piece.onMove(function(e) {
                 var pos = grid.screenpos(e.newPos.col, e.newPos.row);
                 
-                stun.style.left = div.style.left = pos.x + "px";
-                stun.style.top = div.style.top = pos.y + "px";
+                back.style.left = div.style.left = pos.x + "px";
+                back.style.top = div.style.top = pos.y + "px";
                 
                 if(e.source === "user") {
                     ch.send({ move: { piece: { color: piece.color, type: piece.type }, 
@@ -164,12 +177,13 @@
                             }); 
                 }
                 
+                back.className = "stunned-background";
                 stunned.push(piece);
             });
             
             piece.onDestroy(function(e) {
                 div.parentNode.removeChild(div);
-                stun.parentNode.removeChild(stun);
+                back.parentNode.removeChild(back);
             });
         });
         
@@ -181,10 +195,15 @@
                 
                 var percent = 1 - Math.min(1, (now - stunned[i].lastMoved) / 5000);
                 
-                stunned[i].stun.style.opacity = percent * .8 + .2;
-                stunned[i].stun.style.height = Math.round(percent * grid.tileHeight) + "px";
+                stunned[i].back.style.opacity = percent * .7 + .2;
+                stunned[i].back.style.height = Math.round(percent * grid.tileHeight) + "px";
                 
-                if(percent === 0) { stunned.splice(i, 1); i -= 1; }
+                if(percent === 0) {
+                    $(stunned[i].back).css({ height: "", opacity: "" });
+                    stunned[i].back.className = "piece-background";
+                    stunned.splice(i, 1);
+                    i -= 1; 
+                }
             }
         }, 100);
     })();
@@ -211,7 +230,13 @@
             e.preventDefault();
             
             var piece = game.board[y][x];
-            if(!piece.isEmpty) { selectedPiece = piece; }
+            
+            if(piece.isStunned()) { return; }
+            
+            if(piece.isEmpty) { return; }
+
+            selectedPiece = piece;
+            piece.back.className = "selected-background";
         });
         
         game.board.grid.addEvent("tileup", function(e, x, y) {
@@ -219,16 +244,16 @@
             
             if(!selectedPiece) { return; }
             
+            selectedPiece.back.className = "piece-background";
+            
             if(x > 7 || x < 0 || y > 7 || y < 0) { return; }
             
             if(game.player !== selectedPiece.color) { return; }
             
-            if(selectedPiece.isStunned()) { return; }
+            if(!selectedPiece.isValidMove(y, x)) { return }
             
-            if(selectedPiece.isValidMove(y, x)) { 
-                selectedPiece.pos(y, x, "user");
-                selectedPiece = null; 
-            }
+            selectedPiece.pos(y, x, "user");
+            selectedPiece = null;
         });
     });
     
