@@ -189,22 +189,31 @@ $(function() {
         }
     
         function DrawLayer(ctx) {
-            var points = [];
+            var points = [], segStarted = false, me = this;
             
+            ctx.lineJoin = "round";
             ctx.lineCap = "round";
             ctx.clear = function() { this.clearRect(0, 0, 630, 500); };
-            ctx.lineJoin = "round";
             
             this.start = function(x, y, brushNum) {
+                if(segStarted) {
+                    var endPoint = points[points.length - 1];
+                    if(endPoint) { me.end(endPoint.x, endPoint.y); }
+                }
+                
                 var brush = parseBrush(brushNum);
                 ctx.strokeStyle = brush.rgba;
                 ctx.lineWidth = brush.width;
                 
                 points = [ { x: x >> 0, y: y >> 0 } ];
                 points.brush = brush;
+                
+                segStarted = true;
             };
             
             this.addPoint = function(x, y) {
+                if(!segStarted) { me.start(x, y, 0xFF000000); }
+                
                 points.push({ x: x >> 0, y: y >> 0 });
                 
                 ctx.clear();
@@ -215,8 +224,12 @@ $(function() {
             };
             
             this.end = function(x, y) {
+                if(!segStarted) { return; }
+                
                 this.addPoint(x, y);
                 this.onEnd.trigger(points, ctx);
+                
+                segStarted = false;
             };
             
             this.onEnd = createEvent(this);
