@@ -156,7 +156,7 @@ $(function() {
     baseCtx.lineCap = "round";
     baseCtx.lineJoin = "round";
     
-    $("#clear").click(function() { ch.clear(); baseCtx.clear(); drawPoints.clear(); return false; });
+    $("#clear").click(function() { baseCtx.clear(); drawPoints.clear(); ch.clear(); return false; });
     
     var DrawLayer = (function() {
         var alphas = [ .9, .8, .7, .6, .55, .5, .45, .4, .35, .3, .25, .20, .15, .1, .05, .03 ];
@@ -239,7 +239,7 @@ $(function() {
                 
                 var diff = (new Date()).getTime() - points[id].offset;
                 var threshold = pnt1.time - points[id].lastTime;
-                threshold *= Math.min(1, 200 / threshold); // Adjust time to make long waits shorter
+                threshold *= Math.min(1, 50 / threshold); // Adjust time to make long waits shorter
                 if(diff < threshold) { continue; }
                 
                 if(pnt1.type === "start") { points[id].layer.start(pnt1.x, pnt1.y, pnt1.brush); }
@@ -268,7 +268,7 @@ $(function() {
             if(data.content.length < 2) { return; }
             
             var offset = -content[0].time;
-            if(points[id].length > 0) { offset = points[id][points[id].length - 1].time; }            
+            if(points[id].length > 0) { offset = points[id][points[id].length - 1].time; }
             for(var i = 0; i < content.length; i++) { content[i].time += offset }
             
             Array.prototype.push.apply(points[id], content);
@@ -288,7 +288,7 @@ $(function() {
                     
                     baseCtx.beginPath();
                     baseCtx.moveTo(points[0].x, points[0].y);
-                    for(var i = 1; i < points.length; i++) { baseCtx.lineTo(points[i].x, points[i].y); }        
+                    for(var i = 1; i < points.length; i++) { baseCtx.lineTo(points[i].x, points[i].y); }
                     baseCtx.stroke();
                     
                     ctx.clear();
@@ -315,7 +315,7 @@ $(function() {
             points.push({ x: +x >> 0, y: +y >> 0, "brush": brushNum,
                           time: (curTime - lastTime) % 10000, type: type });
             
-            if(type !== "end" && curTime - lastTime < 250) { return; }
+            if(type !== "end" && curTime - lastTime < 150) { return; }
             lastTime = curTime;
             
             if(points.length < 2) { return; }
@@ -328,7 +328,7 @@ $(function() {
     var userCanvas = $("<canvas width='630' height='500' unselectable='on'></canvas>")[0];
     $("#paper").append(userCanvas);
     
-    var userCtx = userCanvas.getContext("2d");    
+    var userCtx = userCanvas.getContext("2d");
     var userLayer = new DrawLayer(userCtx);
     userLayer.onEnd(function(points, ctx) {
         baseCtx.strokeStyle = points.brush.rgba;
@@ -336,7 +336,7 @@ $(function() {
         
         baseCtx.beginPath();
         baseCtx.moveTo(points[0].x, points[0].y);
-        for(var i = 1; i < points.length; i++) { baseCtx.lineTo(points[i].x, points[i].y); }        
+        for(var i = 1; i < points.length; i++) { baseCtx.lineTo(points[i].x, points[i].y); }
         baseCtx.stroke();
         
         ctx.clear();
@@ -359,7 +359,7 @@ $(function() {
         var brush = DrawLayer.parseBrush(brushNum);
         userCtx.clear();
         userCtx.strokeStyle = brush.rgba;
-        userCtx.fillStyle = ["rgba(", brush.red, ", ", brush.green, ", ", brush.blue, ", ", 
+        userCtx.fillStyle = ["rgba(", brush.red, ", ", brush.green, ", ", brush.blue, ", ",
                                       brush.alpha / 3, ")"].join("");
         userCtx.lineWidth = 2;
         userCtx.beginPath();
