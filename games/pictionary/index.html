@@ -382,7 +382,7 @@ $(function() {
     }
     
     var paper = document.getElementById("paper");
-    var isMouseDown = false, basePos = $(paper).offset(), lastPnt;
+    var isMouseDown = false, basePos = $(paper).offset(), lastSentTime;
     $(document)
         .mousedown(function(e) {
             isMouseDown = (e.target === paper || $.contains(paper, e.target));
@@ -392,7 +392,7 @@ $(function() {
                 
                 userLayer.start(x, y, brushNum);
                 sendPoint(x, y, "start", brushNum);
-                lastPnt = { x: x, y: y, time: (new Date()).getTime() };
+                lastSentTime = (new Date()).getTime();
                 
                 chatCover.show();
             
@@ -404,19 +404,19 @@ $(function() {
         .mousemove(function(e) {
             var x = e.pageX - basePos.left, y = e.pageY - basePos.top;
             
-            if(!isMouseDown) { 
+            if(!isMouseDown) {
                 if(e.target == paper || $.contains(paper, e.target)) { drawHint(x, y); }
                 else { userCtx.clear(); }
                 
-                return; 
+                return;
             }
             
             var curTime = (new Date()).getTime();
-            if(curTime - lastPnt.time < 20) { return; }
+            if(curTime - lastSentTime < 20) { return; }
             
             userLayer.addPoint(x, y);
             sendPoint(x, y);
-            lastPnt = { x: x, y: y, time: curTime };
+            lastSentTime = curTime;
         })
         .mouseup(function(e) {
             if(isMouseDown) {
