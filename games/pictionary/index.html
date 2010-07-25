@@ -384,7 +384,11 @@ $(function() {
     var paper = document.getElementById("paper");
     var isMouseDown = false, basePos = $(paper).offset(), lastSentTime;
     $(document)
-        .mousedown(function(e) {
+        .bind("mousedown touchstart MozTouchDown", function(e) {
+            e = e.originalEvent;
+            if(e.touches && e.touches.length) { e = e.touches[0]; }
+            else if(e.changedTouches && e.changedTouches.length) { e = e.changedTouches[0]; }
+            
             isMouseDown = (e.target === paper || $.contains(paper, e.target));
             
             if(isMouseDown) {
@@ -401,7 +405,11 @@ $(function() {
             
             return true;
         })
-        .mousemove(function(e) {
+        .bind("mousemove touchmove MozTouchMove", function(e) {
+            e = e.originalEvent;
+            if(e.touches && e.touches.length) { e = e.touches[0]; }
+            else if(e.changedTouches && e.changedTouches.length) { e = e.changedTouches[0]; }
+            
             var x = e.pageX - basePos.left, y = e.pageY - basePos.top;
             
             if(!isMouseDown) {
@@ -418,7 +426,11 @@ $(function() {
             sendPoint(x, y);
             lastSentTime = curTime;
         })
-        .mouseup(function(e) {
+        .bind("mouseup touchend MozTouchRelease", function(e) {
+            e = e.originalEvent;
+            if(e.touches && e.touches.length) { e = e.touches[0]; }
+            else if(e.changedTouches && e.changedTouches.length) { e = e.changedTouches[0]; }
+            
             if(isMouseDown) {
                 var x = e.pageX - basePos.left, y = e.pageY - basePos.top;
                 
@@ -434,6 +446,7 @@ $(function() {
     var brushNum = 0x44000000;
     $("#colors").delegate(".brush-color", "click", function() {
         brushNum = (brushNum & 0xFF000000) | parseInt($(this).attr("hex-color"), 16);
+        return false;
     });
     
     $("#alpha").slider({ min: 0, max: 15, range: "min", value: (brushNum & 0x0F000000) >> 24,
