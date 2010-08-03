@@ -195,6 +195,12 @@ $(function() {
             ctx.lineCap = "round";
             ctx.clear = function() { this.clearRect(0, 0, 630, 500); };
             
+            this.clear = function() {
+                ctx.clear();
+                points = [];
+                segStarted = false;
+            };
+            
             this.start = function(x, y, brushNum) {
                 if(segStarted) {
                     var endPoint = points[points.length - 1];
@@ -312,7 +318,7 @@ $(function() {
         };
         
         drawPoints.clear = function() { 
-            for(var id in points) if(points[id].layer) { points[id].layer.destroy(); }
+            for(var id in points) if(points[id].layer) { points[id].layer.clear(); }
         };
         
         return drawPoints;
